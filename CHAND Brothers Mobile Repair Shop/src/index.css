@@ -129,6 +129,59 @@ button, input, select, textarea {
   gap: 12px;
 }
 
+/* General Button Styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  border: none;
+  text-decoration: none;
+  user-select: none;
+}
+
+.btn-primary {
+  background-color: var(--color-cyan);
+  color: #000000;
+}
+
+.btn-primary:hover {
+  background-color: #22d3ee;
+  box-shadow: 0 0 15px var(--color-cyan-glow);
+}
+
+.btn-secondary {
+  background-color: var(--color-border);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-glow);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-bg-card-hover);
+  border-color: var(--color-cyan);
+  color: #fff;
+}
+
+.btn-danger {
+  background-color: var(--color-rose);
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background-color: #fb7185;
+  box-shadow: 0 0 15px var(--color-rose-glow);
+}
+
+.menu-toggle-btn {
+  display: none; /* Hidden on desktop */
+}
+
 /* Sidebar Drawer Style */
 .sidebar-navigation {
   position: fixed;
@@ -2150,75 +2203,137 @@ button, input, select, textarea {
   letter-spacing: 0.1em;
 }
 
-/* Authentication Screen overlay */
+/* Authentication Screen overlay - Premium Cyberpunk Glassmorphism */
 .login-screen-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #060913;
+  background: radial-gradient(circle at 50% 50%, #0f172a 0%, #030712 100%);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 24px;
+  overflow-y: auto;
 }
 
 .login-card {
   width: 100%;
-  max-width: 440px;
-  animation: floatUp 0.5s ease-out;
+  max-width: 460px;
+  background: rgba(12, 19, 34, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(6, 182, 212, 0.15);
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(6, 182, 212, 0.05);
+  animation: floatUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-cyan) 0%, var(--color-indigo) 100%);
 }
 
 .login-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 32px;
+  text-align: center;
 }
 
 .shop-logo {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   background-color: var(--color-cyan-glow);
   color: var(--color-cyan);
-  border-radius: 14px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
-  border: 1px solid var(--color-cyan);
+  margin-bottom: 20px;
+  border: 1.5px solid var(--color-cyan);
   box-shadow: var(--shadow-neon-cyan);
+  animation: logoGlowPulse 3s infinite ease-in-out;
+}
+
+@keyframes logoGlowPulse {
+  0% { box-shadow: 0 0 15px rgba(6, 182, 212, 0.3); transform: scale(1); }
+  50% { box-shadow: 0 0 30px rgba(6, 182, 212, 0.6); transform: scale(1.05); }
+  100% { box-shadow: 0 0 15px rgba(6, 182, 212, 0.3); transform: scale(1); }
 }
 
 .login-header h1 {
   font-family: var(--font-family-title);
   font-weight: 900;
-  font-size: 24px;
+  font-size: 26px;
   color: #fff;
   letter-spacing: 0.05em;
+  background: linear-gradient(135deg, #ffffff 40%, var(--color-cyan) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .login-header p {
   font-size: 13px;
   color: var(--color-text-secondary);
+  margin-top: 6px;
+  font-weight: 500;
 }
 
 .login-options-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
+  gap: 14px;
+}
+
+.login-options-grid .btn {
+  height: 48px;
+  font-size: 14px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.login-options-grid .btn-primary {
+  background: linear-gradient(135deg, var(--color-cyan) 0%, #0891b2 100%);
+  color: #000;
+}
+
+.login-options-grid .btn-primary:hover {
+  background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+  transform: translateY(-1px);
+}
+
+.login-options-grid .btn-secondary {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.login-options-grid .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 .login-divider {
   display: flex;
   align-items: center;
-  margin: 20px 0;
-  font-size: 10px;
+  margin: 24px 0;
+  font-size: 11px;
   color: var(--color-text-muted);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.15em;
 }
 
 .login-divider::before, .login-divider::after {
@@ -2229,13 +2344,40 @@ button, input, select, textarea {
 }
 
 .login-divider span {
-  padding: 0 10px;
+  padding: 0 14px;
 }
 
 .phone-login-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+}
+
+.phone-login-form .form-input {
+  height: 46px;
+  border-radius: 10px;
+  font-size: 14px;
+  background-color: rgba(5, 8, 14, 0.8);
+}
+
+.phone-login-form .form-input:focus {
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+}
+
+.phone-login-form .btn-primary {
+  height: 48px;
+  border-radius: 12px;
+  font-size: 14px;
+  margin-top: 6px;
+  background: linear-gradient(135deg, var(--color-indigo) 0%, #4f46e5 100%);
+  color: #fff;
+}
+
+.phone-login-form .btn-primary:hover {
+  background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+  transform: translateY(-1px);
 }
 
 /* Mobile responsive Header Nav */

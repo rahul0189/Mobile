@@ -1,0 +1,317 @@
+import React, { useState } from 'react';
+import { 
+  ArrowLeft, Edit3, Trash2, Printer, MessageSquare, 
+  Save, Check, Phone, ShieldAlert, Calendar, CreditCard,
+  User, Smartphone, Clipboard, Key, ShieldCheck
+} from 'lucide-react';
+import { REPAIR_STATUSES } from '../state';
+
+export default function TicketDetailScreen({
+  ticket,
+  onBack,
+  onStatusChanged,
+  onEditTicket,
+  onShowReceipt,
+  onDeleteTicket,
+  onSendSmsAlert,
+  onNewTicketForCustomer
+}) {
+  const [techNotes, setTechNotes] = useState(ticket.technicianNotes || "");
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState(ticket.status);
+  const [showStatusUpdateConfirm, setShowStatusUpdateConfirm] = useState(false);
+
+  const balance = (ticket.estimatedCost > 0 ? ticket.estimatedCost : (ticket.partsCost + ticket.laborCost)) - ticket.advancePaid;
+  const totalCost = ticket.estimatedCost > 0 ? ticket.estimatedCost : (ticket.partsCost + ticket.laborCost);
+
+  const formatDate = (ms) => {
+    return new Date(ms).toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const handleSaveNotes = () => {
+    onStatusChanged(ticket.status, techNotes);
+    setIsEditingNotes(false);
+  };
+
+  const handleStatusClick = (statusKey) => {
+    setSelectedStatus(statusKey);
+    setShowStatusUpdateConfirm(true);
+  };
+
+  const confirmStatusChange = () => {
+    onStatusChanged(selectedStatus, techNotes);
+    setShowStatusUpdateConfirm(false);
+  };
+
+  return (
+    <div className="ticket-detail-container">
+      {/* Header */}
+      <header className="screen-header">
+        <div className="header-left">
+          <button className="btn btn-secondary btn-icon-only" onClick={onBack} aria-label="Go Back">
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <div className="ticket-header-title">
+              <h1>{ticket.ticketNumber}</h1>
+              <span 
+                className="badge status-badge"
+                style={{ 
+                  backgroundColor: `${REPAIR_STATUSES[ticket.status]?.badgeColor}20`,
+                  color: REPAIR_STATUSES[ticket.status]?.badgeColor,
+                  border: `1px solid ${REPAIR_STATUSES[ticket.status]?.badgeColor}40`
+                }}
+              >
+                {REPAIR_STATUSES[ticket.status]?.displayName}
+              </span>
+            </div>
+            <p className="subtitle">Last updated: {formatDate(ticket.dateUpdatedMillis)}</p>
+          </div>
+        </div>
+        <div className="header-actions">
+          <button className="btn btn-secondary" onClick={() => onSendSmsAlert(ticket)}>
+            <MessageSquare size={16} /> SMS Alert
+          </button>
+          <button className="btn btn-secondary" onClick={() => onShowReceipt(ticket)}>
+            <Printer size={16} /> Receipt
+          </button>
+          <button className="btn btn-secondary" onClick={() => onEditTicket(ticket)}>
+            <Edit3 size={16} /> Edit
+          </button>
+          <button className="btn btn-danger" onClick={() => {
+            if(confirm(`Are you sure you want to delete Ticket ${ticket.ticketNumber}?`)) {
+              onDeleteTicket(ticket.id);
+              onBack();
+            }
+          }}>
+            <Trash2 size={16} /> Delete
+          </button>
+        </div>
+      </header>
+
+      {/* Main Grid */}
+      <div className="detail-grid">
+        {/* Left Side: Client, Device, and Status timeline */}
+        <div className="detail-main-info">
+          
+          {/* Status Progression Timeline */}
+          <div className="card timeline-card">
+            <h2 className="card-title">Repair Progression</h2>
+            <div className="timeline-stepper">
+              {Object.entries(REPAIR_STATUSES).map(([key, value]) => {
+                const isCurrent = ticket.status === key;
+                const isCancelled = key === 'CANCELLED';
+                
+                // Don't show Cancelled in the main sequence unless it IS cancelled
+                if (isCancelled && ticket.status !== 'CANCELLED') return null;
+
+                return (
+                  <button 
+                    key={key} 
+                    className={`timeline-step-btn ${isCurrent ? 'active' : ''}`}
+                    onClick={() => handleStatusClick(key)}
+                    style={{ '--step-color': value.badgeColor }}
+                  >
+                    <div className="step-marker" style={{ borderColor: value.badgeColor, backgroundColor: isCurrent ? value.badgeColor : 'transparent' }}>
+                      {isCurrent && <Check size={12} className="check-icon" />}
+                    </div>
+                    <div className="step-label">
+                      <span className="step-name">{value.displayName}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {showStatusUpdateConfirm && (
+              <div className="status-confirm-box">
+                <p>Change status to <strong>{REPAIR_STATUSES[selectedStatus]?.displayName}</strong>?</p>
+                <div className="confirm-actions">
+                  <button className="btn btn-secondary btn-sm" onClick={() => setShowStatusUpdateConfirm(false)}>Cancel</button>
+                  <button className="btn btn-primary btn-sm" onClick={confirmStatusChange}>Confirm Update</button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Client & Device Details Card */}
+          <div className="info-cards-row">
+            {/* Client Info */}
+            <div className="card info-subcard">
+              <div className="info-card-header">
+                <User size={18} className="text-cyan" />
+                <h3>Client Details</h3>
+              </div>
+              <div className="info-fields">
+                <div className="info-field">
+                  <span className="info-label">Customer Name</span>
+                  <span className="info-value">{ticket.customerName}</span>
+                </div>
+                <div className="info-field">
+                  <span className="info-label">Phone Number</span>
+                  <a href={`tel:${ticket.customerPhone}`} className="info-value phone-link">
+                    <Phone size={14} /> {ticket.customerPhone}
+                  </a>
+                </div>
+                <div className="info-field">
+                  <span className="info-label">Registration Date</span>
+                  <span className="info-value"><Calendar size={14} /> {formatDate(ticket.dateCreatedMillis)}</span>
+                </div>
+                <button 
+                  className="btn btn-secondary btn-sm" 
+                  style={{ marginTop: '12px', width: '100%' }}
+                  onClick={() => onNewTicketForCustomer(ticket.customerName, ticket.customerPhone)}
+                >
+                  <Plus size={14} /> Book Another Device
+                </button>
+              </div>
+            </div>
+
+            {/* Device Info */}
+            <div className="card info-subcard">
+              <div className="info-card-header">
+                <Smartphone size={18} className="text-indigo" />
+                <h3>Device Details</h3>
+              </div>
+              <div className="info-fields">
+                <div className="info-field">
+                  <span className="info-label">Device model</span>
+                  <span className="info-value font-outfit">{ticket.mobileBrand} {ticket.mobileModel}</span>
+                </div>
+                <div className="info-field">
+                  <span className="info-label">Serial / IMEI</span>
+                  <span className="info-value">{ticket.serialOrImei || "N/A"}</span>
+                </div>
+                <div className="info-field">
+                  <span className="info-label">Device Lock Passcode</span>
+                  <span className="info-value passcode-badge"><Key size={12} /> {ticket.customerPasscode || "None"}</span>
+                </div>
+                <div className="info-field">
+                  <span className="info-label">Received Physical Condition</span>
+                  <span className="info-value text-italic">"{ticket.deviceCondition}"</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Issue & Diagnosis Card */}
+          <div className="card issue-card">
+            <div className="info-card-header">
+              <Clipboard size={18} className="text-rose" />
+              <h3>Issue Details & Diagnosis</h3>
+            </div>
+            
+            <div className="issue-details-grid">
+              <div className="issue-detail-item">
+                <span className="info-label">Issue Category</span>
+                <span className="badge category-badge">{ticket.issueCategory}</span>
+              </div>
+              
+              <div className="issue-detail-item">
+                <span className="info-label">Reported Fault Description</span>
+                <p className="fault-description-text">"{ticket.issueDescription}"</p>
+              </div>
+            </div>
+
+            <hr className="divider" />
+
+            <div className="tech-notes-section">
+              <div className="tech-notes-header">
+                <span className="info-label">Technician Diagnosis & Action Notes</span>
+                {!isEditingNotes ? (
+                  <button className="btn btn-secondary btn-xs" onClick={() => setIsEditingNotes(true)}>
+                    <Edit3 size={12} /> Edit Notes
+                  </button>
+                ) : (
+                  <button className="btn btn-primary btn-xs" onClick={handleSaveNotes}>
+                    <Save size={12} /> Save Notes
+                  </button>
+                )}
+              </div>
+
+              {isEditingNotes ? (
+                <textarea 
+                  className="form-input tech-notes-textarea" 
+                  value={techNotes} 
+                  onChange={(e) => setTechNotes(e.target.value)}
+                  placeholder="Type updates, diagnostic details, ordered parts, etc..."
+                  rows={4}
+                />
+              ) : (
+                <p className="tech-notes-display">
+                  {ticket.technicianNotes ? ticket.technicianNotes : <em>No technician notes logged yet. Click 'Edit Notes' to log details.</em>}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Billing & Financial Overview */}
+        <div className="detail-sidebar">
+          <div className="card billing-card">
+            <div className="info-card-header">
+              <CreditCard size={18} className="text-emerald" />
+              <h3>Billing & Quote</h3>
+            </div>
+
+            <div className="billing-receipt-details">
+              {ticket.estimatedCost > 0 ? (
+                // Estimated cost layout
+                <div className="billing-item quote-type">
+                  <div className="billing-label-group">
+                    <span className="billing-name">Estimated Quote</span>
+                    <span className="billing-desc">Flatsourced total estimate</span>
+                  </div>
+                  <span className="billing-value text-cyan">₹{ticket.estimatedCost.toFixed(2)}</span>
+                </div>
+              ) : (
+                // Itemized cost layout
+                <>
+                  <div className="billing-item">
+                    <span className="billing-name">Spare Parts Cost</span>
+                    <span className="billing-value">₹{ticket.partsCost.toFixed(2)}</span>
+                  </div>
+                  <div className="billing-item">
+                    <span className="billing-name">Repair Labor Fee</span>
+                    <span className="billing-value">₹{ticket.laborCost.toFixed(2)}</span>
+                  </div>
+                </>
+              )}
+
+              <hr className="divider" />
+
+              <div className="billing-item total">
+                <span className="billing-name">Total Price</span>
+                <span className="billing-value">₹{totalCost.toFixed(2)}</span>
+              </div>
+
+              <div className="billing-item advance">
+                <span className="billing-name">Advance Paid</span>
+                <span className="billing-value text-emerald">- ₹{ticket.advancePaid.toFixed(2)}</span>
+              </div>
+
+              <hr className="divider" />
+
+              <div className={`billing-item balance ${balance > 0 ? 'due' : 'settled'}`}>
+                <span className="billing-name">{balance > 0 ? 'Remaining Balance' : 'Bill Paid'}</span>
+                <span className="billing-value">
+                  {balance > 0 ? `₹${balance.toFixed(2)}` : (
+                    <span className="paid-stamp">
+                      <ShieldCheck size={16} /> Fully Paid
+                    </span>
+                  )}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

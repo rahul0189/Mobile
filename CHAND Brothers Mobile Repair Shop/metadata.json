@@ -1,0 +1,6 @@
+{
+  "name": "CHAND Brothers Mobile Repair Shop",
+  "description": "Professional Mobile Repair Management app for customer tracking, real-time repair status updates, automated SMS/WhatsApp notifications, and order updates.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

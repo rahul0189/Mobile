@@ -53,14 +53,13 @@ export default function AddEditProductDialog({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content product-dialog-modal">
+      <form onSubmit={handleSubmit} className="modal-content product-dialog-modal">
         <div className="modal-header">
           <h2>{product ? `Edit Product: ${product.sku}` : "Add New Stock Product"}</h2>
           <button className="close-btn" onClick={onDismiss} aria-label="Close">
             <X size={20} />
           </button>
         </div>
-        <form onSubmit={handleSubmit}>
           <div className="modal-body">
             
             <div className="form-group">
@@ -168,8 +167,7 @@ export default function AddEditProductDialog({
               <Save size={16} /> Save Product
             </button>
           </div>
-        </form>
-      </div>
+      </form>
     </div>
   );
 }

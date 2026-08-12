@@ -88,14 +88,13 @@ export default function AddEditTicketDialog({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content ticket-dialog-modal">
+      <form onSubmit={handleSubmit} className="modal-content ticket-dialog-modal">
         <div className="modal-header">
           <h2>{ticket ? `Edit Ticket ${ticket.ticketNumber}` : "New Repair Booking"}</h2>
           <button className="close-btn" onClick={onDismiss} aria-label="Close">
             <X size={20} />
           </button>
         </div>
-        <form onSubmit={handleSubmit}>
           <div className="modal-body">
             
             {/* Customer Details Row */}
@@ -290,8 +289,7 @@ export default function AddEditTicketDialog({
               <Save size={16} /> Save Ticket
             </button>
           </div>
-        </form>
-      </div>
+      </form>
     </div>
   );
 }

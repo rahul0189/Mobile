@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   ArrowLeft, Edit3, Trash2, Printer, MessageSquare, 
   Save, Check, Phone, ShieldAlert, Calendar, CreditCard,
-  User, Smartphone, Clipboard, Key, ShieldCheck
+  User, Smartphone, Clipboard, Key, ShieldCheck, Plus
 } from 'lucide-react';
 import { REPAIR_STATUSES } from '../state';
 
@@ -159,6 +159,12 @@ export default function TicketDetailScreen({
                     <Phone size={14} /> {ticket.customerPhone}
                   </a>
                 </div>
+                {ticket.customerEmail && (
+                  <div className="info-field">
+                    <span className="info-label">Email Address</span>
+                    <span className="info-value" style={{ wordBreak: 'break-all' }}>{ticket.customerEmail}</span>
+                  </div>
+                )}
                 <div className="info-field">
                   <span className="info-label">Registration Date</span>
                   <span className="info-value"><Calendar size={14} /> {formatDate(ticket.dateCreatedMillis)}</span>
@@ -185,8 +191,18 @@ export default function TicketDetailScreen({
                   <span className="info-value font-outfit">{ticket.mobileBrand} {ticket.mobileModel}</span>
                 </div>
                 <div className="info-field">
+                  <span className="info-label">Color</span>
+                  <span className="info-value">{ticket.deviceColor || "Black"}</span>
+                </div>
+                <div className="info-field">
                   <span className="info-label">Serial / IMEI</span>
                   <span className="info-value">{ticket.serialOrImei || "N/A"}</span>
+                </div>
+                <div className="info-field">
+                  <span className="info-label">Power Status</span>
+                  <span className={`badge ${ticket.isPoweringOn === false ? 'bg-rose' : 'bg-cyan'}`} style={{ width: 'fit-content', padding: '2px 8px', fontSize: '11px', borderRadius: '4px', fontWeight: 'bold' }}>
+                    {ticket.isPoweringOn === false ? "Dead / Not Powering On" : "Powering On OK"}
+                  </span>
                 </div>
                 <div className="info-field">
                   <span className="info-label">Device Lock Passcode</span>
@@ -212,14 +228,30 @@ export default function TicketDetailScreen({
                 <span className="info-label">Issue Category</span>
                 <span className="badge category-badge">{ticket.issueCategory}</span>
               </div>
-              
+
               <div className="issue-detail-item">
+                <span className="info-label">Repair Warranty</span>
+                <span className="badge category-badge" style={{ backgroundColor: 'rgba(99, 102, 241, 0.1)', color: '#818cf8', borderColor: 'rgba(99, 102, 241, 0.3)' }}>
+                  {ticket.warranty || "30 Days"}
+                </span>
+              </div>
+
+              {ticket.estimatedReadyDate && (
+                <div className="issue-detail-item">
+                  <span className="info-label">Est. Completion Date</span>
+                  <span className="info-value" style={{ fontSize: '13px', fontWeight: '700', color: 'var(--color-cyan)' }}>
+                    <Calendar size={12} style={{ marginRight: '4px' }} />
+                    {new Date(ticket.estimatedReadyDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </span>
+                </div>
+              )}
+              
+              <div className="issue-detail-item" style={{ gridColumn: 'span 2' }}>
                 <span className="info-label">Reported Fault Description</span>
                 <p className="fault-description-text">"{ticket.issueDescription}"</p>
               </div>
             </div>
-
-            <hr className="divider" />
+          </div>   <hr className="divider" />
 
             <div className="tech-notes-section">
               <div className="tech-notes-header">

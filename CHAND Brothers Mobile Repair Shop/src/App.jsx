@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Wrench, Package, Users, BarChart3, Database, 
-  LogOut, ShieldAlert, X, Shield, Lock, Smartphone, User, Menu
+  LogOut, ShieldAlert, X, Shield, Lock, Smartphone, User, Menu,
+  Bell, Cpu, CheckCircle2, FileText, ShieldCheck
 } from 'lucide-react';
 
 // Import local state logic
@@ -487,7 +488,124 @@ export default function App() {
       ) : (
         /* 3. Main Dashboard Application layout */
         <div className="app-container">
-          {/* Side Drawer Sidebar Navigation */}
+          {/* Top Horizontal Navbar for PC */}
+          <header className="top-nav-bar hide-on-mobile">
+            <div className="top-brand-group">
+              <Wrench size={22} className="text-cyan" />
+              <div>
+                <span style={{ display: 'block', fontFamily: 'var(--font-family-title)', fontWeight: 900, fontSize: '15px', letterSpacing: '0.05em', color: '#fff' }}>CHAND BROTHERS</span>
+                <span style={{ display: 'block', fontSize: '9px', textTransform: 'uppercase', color: 'var(--color-cyan)', fontWeight: 700, letterSpacing: '0.15em', marginTop: '-2px' }}>Mobile Repair Shop</span>
+              </div>
+            </div>
+
+            <nav className="top-nav-tabs">
+              <button 
+                className={`top-nav-tab ${currentDestination === 'REPAIR_TICKETS' && !selectedTicket ? 'active' : ''}`}
+                onClick={() => { setSelectedTicket(null); setCurrentDestination('REPAIR_TICKETS'); }}
+              >
+                <Wrench size={14} />
+                <span>Dashboard</span>
+              </button>
+              <button 
+                className={`top-nav-tab ${currentDestination === 'PRODUCT_INVENTORY' ? 'active' : ''}`}
+                onClick={() => { setSelectedTicket(null); setCurrentDestination('PRODUCT_INVENTORY'); }}
+              >
+                <Package size={14} />
+                <span>Product Inventory</span>
+                {lowStockCount > 0 && <span className="nav-badge bg-rose" style={{ marginLeft: '4px', padding: '1px 5px', fontSize: '9px' }}>{lowStockCount} Low</span>}
+              </button>
+              <button 
+                className={`top-nav-tab ${currentDestination === 'CUSTOMERS' ? 'active' : ''}`}
+                onClick={() => { setSelectedTicket(null); setCurrentDestination('CUSTOMERS'); }}
+              >
+                <Users size={14} />
+                <span>Customer Directory</span>
+              </button>
+              <button 
+                className={`top-nav-tab ${currentDestination === 'SIM_ACTIVATIONS' ? 'active' : ''}`}
+                onClick={() => { setSelectedTicket(null); setCurrentDestination('SIM_ACTIVATIONS'); }}
+              >
+                <Smartphone size={14} />
+                <span>SIM Activations</span>
+              </button>
+              <button 
+                className={`top-nav-tab ${currentDestination === 'REPORTS' ? 'active' : ''}`}
+                onClick={() => { setSelectedTicket(null); setCurrentDestination('REPORTS'); }}
+              >
+                <BarChart3 size={14} />
+                <span>Reports & Analytics</span>
+              </button>
+              <button 
+                className={`top-nav-tab ${currentDestination === 'GOOGLE_CLOUD_SYNC' ? 'active' : ''}`}
+                onClick={() => { setSelectedTicket(null); setCurrentDestination('GOOGLE_CLOUD_SYNC'); }}
+              >
+                <Database size={14} />
+                <span>Cloud Sync</span>
+              </button>
+            </nav>
+
+            <div className="top-nav-actions">
+              <button className="dock-item" style={{ width: '38px', height: '38px', borderRadius: '50%', border: '1px solid var(--color-border-glow)' }} title="Notifications">
+                <Bell size={18} />
+              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '1px solid var(--color-border)', paddingLeft: '16px' }}>
+                <div className="user-initial" style={{ width: '32px', height: '32px', fontSize: '13px' }}>
+                  {authUser.name ? authUser.name.charAt(0).toUpperCase() : "T"}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{authUser.name || "Technician"}</span>
+                  <span style={{ fontSize: '9px', color: 'var(--color-text-secondary)' }}>Operator</span>
+                </div>
+                <button className="logout-btn" onClick={handleLogout} title="Log Out" style={{ marginLeft: '8px' }}>
+                  <LogOut size={15} />
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Left Sidebar Collapsed Dock for PC */}
+          <aside className="left-sidebar-dock hide-on-mobile">
+            <button 
+              className={`dock-item ${selectedFilter === 'ALL' ? 'active' : ''}`} 
+              onClick={() => { setSelectedTicket(null); setCurrentDestination('REPAIR_TICKETS'); setSelectedFilter('ALL'); }}
+              title="All Tickets"
+            >
+              <Wrench size={20} />
+            </button>
+            <button 
+              className={`dock-item ${selectedFilter === 'RECEIVED' ? 'active' : ''}`} 
+              onClick={() => { setSelectedTicket(null); setCurrentDestination('REPAIR_TICKETS'); setSelectedFilter('RECEIVED'); }}
+              title="Received Tickets"
+            >
+              <FileText size={20} />
+              {tickets.filter(t => t.status === 'RECEIVED').length > 0 && <span className="badge-dot"></span>}
+            </button>
+            <button 
+              className={`dock-item ${selectedFilter === 'IN_REPAIR' ? 'active' : ''}`} 
+              onClick={() => { setSelectedTicket(null); setCurrentDestination('REPAIR_TICKETS'); setSelectedFilter('IN_REPAIR'); }}
+              title="In Repair"
+            >
+              <Cpu size={20} />
+              {tickets.filter(t => t.status === 'IN_REPAIR').length > 0 && <span className="badge-dot" style={{ backgroundColor: 'var(--color-amber)' }}></span>}
+            </button>
+            <button 
+              className={`dock-item ${selectedFilter === 'READY_FOR_PICKUP' ? 'active' : ''}`} 
+              onClick={() => { setSelectedTicket(null); setCurrentDestination('REPAIR_TICKETS'); setSelectedFilter('READY_FOR_PICKUP'); }}
+              title="Ready for Pickup"
+            >
+              <CheckCircle2 size={20} />
+              {tickets.filter(t => t.status === 'READY_FOR_PICKUP').length > 0 && <span className="badge-dot" style={{ backgroundColor: 'var(--color-emerald)' }}></span>}
+            </button>
+            <button 
+              className={`dock-item ${selectedFilter === 'DELIVERED' ? 'active' : ''}`} 
+              onClick={() => { setSelectedTicket(null); setCurrentDestination('REPAIR_TICKETS'); setSelectedFilter('DELIVERED'); }}
+              title="Delivered & Paid"
+            >
+              <ShieldCheck size={20} />
+            </button>
+          </aside>
+
+          {/* Side Drawer Sidebar Navigation (Mobile drawer backup) */}
           <aside className={`sidebar-navigation ${isSidebarOpen ? 'open' : ''}`}>
             <div className="sidebar-header">
               <div className="brand-badge">
@@ -596,7 +714,7 @@ export default function App() {
           </aside>
 
           {/* Main Content Layout area */}
-          <main className="main-content">
+          <main className="main-content main-content-adnan">
             {selectedTicket ? (
               <TicketDetailScreen
                 ticket={selectedTicket}
@@ -618,6 +736,7 @@ export default function App() {
                     return (
                       <DashboardScreen
                         tickets={tickets}
+                        products={products}
                         searchQuery={searchQuery}
                         onSearchQueryChanged={setSearchQuery}
                         selectedFilter={selectedFilter}

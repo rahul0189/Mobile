@@ -252,7 +252,7 @@ export default function App() {
   const lowStockCount = products.filter(p => p.quantity <= p.lowStockThreshold).length;
 
   return (
-    <div className="app-container">
+    <>
       {/* 1. Animated Shop Door Shutter Splash Overlay */}
       {showShutter && (
         <div className={`shutter-splash-overlay ${shutterOpening ? 'slide-up-exit' : ''}`}>
@@ -343,7 +343,7 @@ export default function App() {
         </div>
       ) : (
         /* 3. Main Dashboard Application layout */
-        <>
+        <div className="app-container">
           {/* Side Drawer Sidebar Navigation */}
           <aside className={`sidebar-navigation ${isSidebarOpen ? 'open' : ''}`}>
             <div className="sidebar-header">
@@ -549,7 +549,7 @@ export default function App() {
               {authUser.name ? authUser.name.charAt(0).toUpperCase() : "T"}
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* 4. Global Dialog Modal Overlays */}
@@ -601,6 +601,6 @@ export default function App() {
           onDismiss={() => setReceiptTicket(null)}
         />
       )}
-    </div>
+    </>
   );
 }

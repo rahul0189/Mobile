@@ -2539,6 +2539,22 @@ textarea.form-input {
   .close-sidebar-btn {
     display: block;
   }
+  .menu-toggle-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: var(--transition-fast);
+  }
+  .menu-toggle-btn:hover {
+    background-color: var(--color-bg-card-hover);
+    color: #fff;
+  }
   .main-content {
     margin-left: 0 !important;
     padding: 84px 16px 30px 16px !important;

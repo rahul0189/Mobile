@@ -155,7 +155,8 @@ export default function CustomerDirectoryScreen({
                       <div className="customer-history-list">
                         {customer.tickets.map(ticket => {
                           const ticketCost = ticket.estimatedCost > 0 ? ticket.estimatedCost : (ticket.partsCost + ticket.laborCost);
-                          const balanceDue = ticketCost - ticket.advancePaid;
+                          const isPaid = ticket.status === 'DELIVERED';
+                          const balanceDue = isPaid ? 0 : (ticketCost - ticket.advancePaid);
                           
                           return (
                             <div 

@@ -33,6 +33,8 @@ export default function App() {
   const [authUser, setAuthUserLocal] = useState(getAuthUser());
   const [phoneLogin, setPhoneLogin] = useState("");
   const [techNameLogin, setTechNameLogin] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [loginError, setLoginError] = useState("");
 
   // Navigation State
   const [currentDestination, setCurrentDestination] = useState("REPAIR_TICKETS");
@@ -113,23 +115,58 @@ export default function App() {
     setSmsTemplates(getSmsTemplates());
   };
 
-  // Login handler
-  const handleLoginGoogle = () => {
-    const userObj = { name: "Rahul Chand", email: "rahul.chand@gmail.com", provider: "google" };
-    setAuthUser(userObj);
-    setGoogleAccount({ isLoggedIn: true, name: "Rahul Chand", email: "rahul.chand@gmail.com" });
+  // Registered Technicians DB helper
+  const getRegisteredTechnicians = () => {
+    let techs = localStorage.getItem('chand_registered_technicians');
+    if (!techs) {
+      // Prepopulate with 'Rahul' account from his screenshots
+      const initialTechs = [{ name: "Rahul", phone: "7986911294" }];
+      localStorage.setItem('chand_registered_technicians', JSON.stringify(initialTechs));
+      return initialTechs;
+    }
+    return JSON.parse(techs);
   };
 
-  const handleLoginPhone = (e) => {
+  const handleAuthSubmit = (e) => {
     e.preventDefault();
-    if (!phoneLogin.trim() || !techNameLogin.trim()) return;
-    const userObj = { name: techNameLogin.trim(), phone: phoneLogin.trim(), provider: "phone" };
-    setAuthUser(userObj);
-  };
+    setLoginError("");
+    const phone = phoneLogin.trim();
+    const name = techNameLogin.trim();
 
-  const handleLoginGuest = () => {
-    const userObj = { name: "Guest Technician", provider: "guest" };
-    setAuthUser(userObj);
+    if (!phone) {
+      setLoginError("Please enter your mobile number.");
+      return;
+    }
+
+    const techs = getRegisteredTechnicians();
+
+    if (isSignUp) {
+      if (!name) {
+        setLoginError("Please enter your name.");
+        return;
+      }
+      const exists = techs.find(t => t.phone === phone);
+      if (exists) {
+        setLoginError("This mobile number is already registered. Switch to Sign In!");
+        return;
+      }
+
+      const newTech = { name, phone, provider: "phone" };
+      techs.push(newTech);
+      localStorage.setItem('chand_registered_technicians', JSON.stringify(techs));
+      
+      setAuthUser(newTech);
+      setAuthUserLocal(newTech);
+    } else {
+      const exists = techs.find(t => t.phone === phone);
+      if (!exists) {
+        setLoginError("Account not found. Please register by selecting Sign Up!");
+        return;
+      }
+
+      setAuthUser(exists);
+      setAuthUserLocal(exists);
+    }
   };
 
   const handleLogout = () => {
@@ -308,49 +345,75 @@ export default function App() {
                 <Wrench size={32} />
               </div>
               <h1>CHAND BROTHERS</h1>
-              <p>Mobile Tech Dashboard Login</p>
+              <p>Mobile Tech Dashboard Access</p>
+            </div>
+
+            <div className="auth-tab-buttons">
+              <button 
+                type="button"
+                className={`auth-tab-btn ${!isSignUp ? 'active' : ''}`}
+                onClick={() => {
+                  setIsSignUp(false);
+                  setLoginError("");
+                }}
+              >
+                Login
+              </button>
+              <button 
+                type="button"
+                className={`auth-tab-btn ${isSignUp ? 'active' : ''}`}
+                onClick={() => {
+                  setIsSignUp(true);
+                  setLoginError("");
+                }}
+              >
+                Sign Up
+              </button>
             </div>
 
             <div className="login-tabs">
-              <div className="login-options-grid">
-                <button className="btn btn-primary" onClick={handleLoginGoogle}>
-                  <Shield size={16} /> Sign in with Google
-                </button>
-                
-                <button className="btn btn-secondary" onClick={handleLoginGuest}>
-                  <User size={16} /> Login as Guest Tech
-                </button>
-              </div>
-
-              <div className="login-divider">
-                <span>OR SIGN IN WITH PHONE</span>
-              </div>
-
-              <form onSubmit={handleLoginPhone} className="phone-login-form">
-                <div className="form-group">
-                  <label>Technician Name</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    value={techNameLogin} 
-                    onChange={(e) => setTechNameLogin(e.target.value)} 
-                    placeholder="e.g. Rahul Chand"
-                    required
-                  />
+              {loginError && (
+                <div className="auth-error-alert">
+                  <ShieldAlert size={16} />
+                  <span>{loginError}</span>
                 </div>
+              )}
+
+              <form onSubmit={handleAuthSubmit} className="phone-login-form">
+                {isSignUp && (
+                  <div className="form-group">
+                    <label>Technician Name</label>
+                    <div className="input-with-icon">
+                      <User size={16} className="input-icon" />
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        value={techNameLogin} 
+                        onChange={(e) => setTechNameLogin(e.target.value)} 
+                        placeholder="e.g. Rahul Chand"
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+                
                 <div className="form-group">
                   <label>Mobile Number</label>
-                  <input 
-                    type="tel" 
-                    className="form-input" 
-                    value={phoneLogin} 
-                    onChange={(e) => setPhoneLogin(e.target.value)} 
-                    placeholder="e.g. 9876543210"
-                    required
-                  />
+                  <div className="input-with-icon">
+                    <Smartphone size={16} className="input-icon" />
+                    <input 
+                      type="tel" 
+                      className="form-input" 
+                      value={phoneLogin} 
+                      onChange={(e) => setPhoneLogin(e.target.value)} 
+                      placeholder="e.g. 7986911294"
+                      required
+                    />
+                  </div>
                 </div>
-                <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-                  Sign In with OTP / Password
+
+                <button type="submit" className="btn btn-primary auth-submit-btn" style={{ width: '100%', marginTop: '10px' }}>
+                  {isSignUp ? "Register & Access Panel" : "Login & Access Panel"}
                 </button>
               </form>
             </div>

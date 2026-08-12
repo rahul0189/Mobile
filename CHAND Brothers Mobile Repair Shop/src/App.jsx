@@ -35,6 +35,10 @@ export default function App() {
   const [techNameLogin, setTechNameLogin] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [loginError, setLoginError] = useState("");
+  const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [otpInput, setOtpInput] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [pendingUserObj, setPendingUserObj] = useState(null);
 
   // Navigation State
   const [currentDestination, setCurrentDestination] = useState("REPAIR_TICKETS");
@@ -139,6 +143,7 @@ export default function App() {
     }
 
     const techs = getRegisteredTechnicians();
+    let targetUser = null;
 
     if (isSignUp) {
       if (!name) {
@@ -151,12 +156,7 @@ export default function App() {
         return;
       }
 
-      const newTech = { name, phone, provider: "phone" };
-      techs.push(newTech);
-      localStorage.setItem('chand_registered_technicians', JSON.stringify(techs));
-      
-      setAuthUser(newTech);
-      setAuthUserLocal(newTech);
+      targetUser = { name, phone, provider: "phone" };
     } else {
       const exists = techs.find(t => t.phone === phone);
       if (!exists) {
@@ -164,9 +164,46 @@ export default function App() {
         return;
       }
 
-      setAuthUser(exists);
-      setAuthUserLocal(exists);
+      targetUser = exists;
     }
+
+    // Trigger OTP modal instead of signing in immediately
+    setPendingUserObj(targetUser);
+    setShowOtpVerification(true);
+    setOtpInput("");
+    setOtpError("");
+  };
+
+  const handleVerifyOtp = (e) => {
+    e.preventDefault();
+    setOtpError("");
+
+    if (otpInput === "1234") {
+      // If signing up, save new account to database
+      if (isSignUp && pendingUserObj) {
+        const techs = getRegisteredTechnicians();
+        techs.push(pendingUserObj);
+        localStorage.setItem('chand_registered_technicians', JSON.stringify(techs));
+      }
+
+      // Log in
+      setAuthUser(pendingUserObj);
+      setAuthUserLocal(pendingUserObj);
+
+      // Clean up states
+      setShowOtpVerification(false);
+      setPendingUserObj(null);
+      setOtpInput("");
+    } else {
+      setOtpError("Invalid verification code! Try entering '1234'.");
+    }
+  };
+
+  const obfuscatePhone = (phone) => {
+    if (!phone || phone.length < 4) return phone;
+    const first = phone.slice(0, 2);
+    const last = phone.slice(-2);
+    return `${first}******${last}`;
   };
 
   const handleLogout = () => {
@@ -678,6 +715,65 @@ export default function App() {
           ticket={receiptTicket}
           onDismiss={() => setReceiptTicket(null)}
         />
+      )}
+
+      {/* OTP Verification Modal Overlay */}
+      {showOtpVerification && (
+        <div className="login-screen-overlay otp-overlay" style={{ zIndex: 1600 }}>
+          <div className="login-card card otp-card">
+            <div className="login-header">
+              <div className="shop-logo">
+                <Smartphone size={32} />
+              </div>
+              <h1>OTP VERIFICATION</h1>
+              <p>Enter the 4-digit code sent to +91 {obfuscatePhone(phoneLogin)}</p>
+            </div>
+
+            {otpError && (
+              <div className="auth-error-alert">
+                <ShieldAlert size={16} />
+                <span>{otpError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleVerifyOtp} className="phone-login-form">
+              <div className="form-group">
+                <label style={{ textAlign: 'center', display: 'block', fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
+                  Please enter <strong>1234</strong> to unlock the tech console
+                </label>
+                <input 
+                  type="text" 
+                  maxLength={4}
+                  className="form-input otp-digit-input" 
+                  value={otpInput} 
+                  onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ""))} 
+                  placeholder="• • • •"
+                  style={{ textAlign: 'center', fontSize: '24px', letterSpacing: '8px', height: '54px' }}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="form-row split-2" style={{ marginTop: '10px' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => {
+                    setShowOtpVerification(false);
+                    setPendingUserObj(null);
+                    setOtpInput("");
+                    setOtpError("");
+                  }}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Verify Code
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </>
   );

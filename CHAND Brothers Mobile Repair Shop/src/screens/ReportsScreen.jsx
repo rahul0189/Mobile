@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Menu, TrendingUp, IndianRupee, PieChart, BarChart3, 
-  ChevronRight, ArrowUpRight, ArrowDownRight, Package, DollarSign
+  ChevronRight, ArrowUpRight, ArrowDownRight, Package, DollarSign,
+  Download, Printer, ChevronDown, FileSpreadsheet
 } from 'lucide-react';
 import { REPAIR_STATUSES } from '../state';
 
@@ -10,6 +11,65 @@ export default function ReportsScreen({
   products,
   onOpenDrawer
 }) {
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+
+  const handleExportCsv = () => {
+    if (tickets.length === 0) {
+      alert("No tickets available to export!");
+      return;
+    }
+    
+    // Headers
+    const headers = [
+      "Ticket Number", "Status", "Customer Name", "Customer Phone", "Customer Email",
+      "Mobile Brand", "Mobile Model", "Color", "Serial/IMEI", "Power Status",
+      "Passcode", "Issue Category", "Warranty", "Est. Ready Date", "Description",
+      "Technician Notes", "Estimated Cost", "Advance Paid", "Parts Cost", "Labor Cost",
+      "Date Created", "Date Updated"
+    ];
+    
+    // Format rows
+    const rows = tickets.map(t => [
+      t.ticketNumber,
+      t.status,
+      t.customerName,
+      t.customerPhone,
+      t.customerEmail || "N/A",
+      t.mobileBrand,
+      t.mobileModel,
+      t.color || "N/A",
+      t.serialOrImei || "N/A",
+      t.isPoweringOn ? "Powering On" : "Dead",
+      t.customerPasscode || "None",
+      t.issueCategory,
+      t.warranty || "30 Days",
+      t.estimatedReadyDate ? new Date(t.estimatedReadyDate).toISOString().split('T')[0] : "N/A",
+      t.issueDescription ? t.issueDescription.replace(/"/g, '""') : "",
+      (t.technicianNotes || "").replace(/"/g, '""'),
+      t.estimatedCost,
+      t.advancePaid,
+      t.partsCost,
+      t.laborCost,
+      new Date(t.dateCreatedMillis).toISOString().split('T')[0],
+      new Date(t.dateUpdatedMillis).toISOString().split('T')[0]
+    ]);
+    
+    // Build CSV string
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(e => e.map(val => `"${val}"`).join(","))
+    ].join("\n");
+    
+    // Trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Chand_Brothers_Tickets_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Revenue & Financial calculations
   // Delivered tickets + advances on active ones
@@ -103,6 +163,23 @@ export default function ReportsScreen({
             <h1>Reports & Analytics</h1>
             <p className="subtitle">Performance and Financial overview</p>
           </div>
+        </div>
+
+        <div className="header-actions hide-on-print" style={{ position: 'relative' }}>
+          <button className="btn btn-primary" onClick={() => setShowExportDropdown(!showExportDropdown)}>
+            <Download size={16} /> Export Report <ChevronDown size={14} style={{ marginLeft: '4px' }} />
+          </button>
+          
+          {showExportDropdown && (
+            <div className="export-dropdown-menu">
+              <button className="dropdown-item" onClick={() => { handleExportCsv(); setShowExportDropdown(false); }}>
+                <FileSpreadsheet size={16} className="text-cyan" /> Export Spreadsheet (CSV)
+              </button>
+              <button className="dropdown-item" onClick={() => { window.print(); setShowExportDropdown(false); }}>
+                <Printer size={16} className="text-emerald" /> Print Shop Summary
+              </button>
+            </div>
+          )}
         </div>
       </header>
 

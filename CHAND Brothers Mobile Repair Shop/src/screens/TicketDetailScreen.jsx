@@ -282,7 +282,6 @@ export default function TicketDetailScreen({
               )}
             </div>
           </div>
-        </div>
 
         {/* Right Side: Billing & Financial Overview */}
         <div className="detail-sidebar">

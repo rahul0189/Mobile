@@ -17,7 +17,8 @@ export default function SimSalesScreen({
 
   // Compute metrics
   const totalSold = sales.length;
-  const viCount = sales.filter(s => s.operator === 'Vi').length;
+  const newCount = sales.filter(s => s.transactionType !== 'PORT').length;
+  const portCount = sales.filter(s => s.transactionType === 'PORT').length;
   const totalRevenue = sales.reduce((sum, s) => sum + (s.amountCollected || 0), 0);
 
   // Toggle Aadhaar view
@@ -90,18 +91,29 @@ export default function SimSalesScreen({
           <div className="metric-info">
             <span className="metric-label">Total SIMs Sold</span>
             <span className="metric-val">{totalSold} Activations</span>
-            <span className="metric-subtext text-indigo">All activations ledger</span>
+            <span className="metric-subtext text-indigo">Total sales ledger</span>
           </div>
         </div>
 
-        <div className="metric-card bg-glass" style={{ borderLeft: '4px solid #7c3aed' }}>
-          <div className="metric-icon" style={{ color: '#7c3aed' }}>
+        <div className="metric-card bg-glass" style={{ borderLeft: '4px solid #06b6d4' }}>
+          <div className="metric-icon" style={{ color: '#06b6d4' }}>
             <ShieldCheck size={24} />
           </div>
           <div className="metric-info">
-            <span className="metric-label">Vi Activations</span>
-            <span className="metric-val">{viCount} SIMs</span>
-            <span className="metric-subtext" style={{ color: '#7c3aed' }}>Vodafone Idea India</span>
+            <span className="metric-label">New Activations</span>
+            <span className="metric-val">{newCount} SIMs</span>
+            <span className="metric-subtext" style={{ color: '#06b6d4' }}>Brand new connections</span>
+          </div>
+        </div>
+
+        <div className="metric-card bg-glass" style={{ borderLeft: '4px solid #f59e0b' }}>
+          <div className="metric-icon" style={{ color: '#f59e0b' }}>
+            <ShieldCheck size={24} />
+          </div>
+          <div className="metric-info">
+            <span className="metric-label">Port-Ins (MNP)</span>
+            <span className="metric-val">{portCount} SIMs</span>
+            <span className="metric-subtext" style={{ color: '#f59e0b' }}>Number transfers done</span>
           </div>
         </div>
 
@@ -112,7 +124,7 @@ export default function SimSalesScreen({
           <div className="metric-info">
             <span className="metric-label">Total FRC Collected</span>
             <span className="metric-val">₹{totalRevenue.toLocaleString('en-IN')}</span>
-            <span className="metric-subtext text-emerald">Total sales revenue</span>
+            <span className="metric-subtext text-emerald">FRC sales revenue</span>
           </div>
         </div>
       </div>
@@ -194,8 +206,17 @@ export default function SimSalesScreen({
                       </div>
                     </td>
                     <td style={{ padding: '16px' }}>
-                      <span className={`operator-badge op-${sale.operator.toLowerCase()}`}>
-                        {sale.operator} ({sale.planType})
+                      {sale.transactionType === 'PORT' ? (
+                        <span className="operator-badge op-other" style={{ borderColor: 'var(--color-border-glow)' }}>
+                          PORT ({sale.portFromOperator || 'Other'} ➔ Vi)
+                        </span>
+                      ) : (
+                        <span className="operator-badge op-vi">
+                          NEW (Vi)
+                        </span>
+                      )}
+                      <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginLeft: '8px', fontWeight: 600 }}>
+                        {sale.planType}
                       </span>
                     </td>
                     <td style={{ padding: '16px', fontWeight: 600, color: 'var(--color-text-secondary)', fontSize: '13px' }}>

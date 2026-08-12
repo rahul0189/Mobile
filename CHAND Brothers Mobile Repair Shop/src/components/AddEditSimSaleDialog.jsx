@@ -15,17 +15,21 @@ export default function AddEditSimSaleDialog({
   const [amountCollected, setAmountCollected] = useState("");
   const [notes, setNotes] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [transactionType, setTransactionType] = useState("NEW");
+  const [portFromOperator, setPortFromOperator] = useState("Jio");
 
   useEffect(() => {
     if (sale) {
       setCustomerName(sale.customerName || "");
       setAllottedNumber(sale.allottedNumber || "");
       setAadhaarNumber(sale.aadhaarNumber || "");
-      setOperator(sale.operator || "Jio");
+      setOperator(sale.operator || "Vi");
       setPlanType(sale.planType || "PREPAID");
       setPlanAmount(sale.planAmount ? sale.planAmount.toString() : "");
       setAmountCollected(sale.amountCollected ? sale.amountCollected.toString() : "");
       setNotes(sale.notes || "");
+      setTransactionType(sale.transactionType || "NEW");
+      setPortFromOperator(sale.portFromOperator || "Jio");
     }
   }, [sale]);
 
@@ -72,6 +76,8 @@ export default function AddEditSimSaleDialog({
       planAmount: planVal,
       amountCollected: collectedVal,
       notes: notes.trim(),
+      transactionType,
+      portFromOperator: transactionType === 'PORT' ? portFromOperator : "",
       dateCreatedMillis: sale ? sale.dateCreatedMillis : undefined
     };
 
@@ -108,6 +114,58 @@ export default function AddEditSimSaleDialog({
                 required
               />
             </div>
+          </div>
+
+          <div className="form-row split-2">
+            <div className="form-group">
+              <label>Activation Type</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', height: '42px', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${transactionType === 'NEW' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setTransactionType('NEW')}
+                  style={{ height: '100%', margin: 0 }}
+                >
+                  New Connection
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${transactionType === 'PORT' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setTransactionType('PORT')}
+                  style={{ height: '100%', margin: 0 }}
+                >
+                  Port-In MNP
+                </button>
+              </div>
+            </div>
+
+            {transactionType === 'PORT' ? (
+              <div className="form-group">
+                <label>Port From (Old Operator)</label>
+                <select
+                  className="form-input"
+                  value={portFromOperator}
+                  onChange={(e) => setPortFromOperator(e.target.value)}
+                  required
+                >
+                  <option value="Jio">Jio</option>
+                  <option value="Airtel">Airtel</option>
+                  <option value="BSNL">BSNL</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            ) : (
+              <div className="form-group">
+                <label>Target Operator</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value="Vi (Vodafone Idea)"
+                  disabled
+                  style={{ opacity: 0.7 }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="form-row split-2">

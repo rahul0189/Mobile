@@ -216,6 +216,7 @@ export function getCustomerProfiles() {
     }, 0);
     const totalAdvancePaid = customer.tickets.reduce((sum, t) => sum + t.advancePaid, 0);
     const totalPendingBalance = customer.tickets.reduce((sum, t) => {
+      if (t.status === 'DELIVERED') return sum;
       const cost = t.estimatedCost > 0 ? t.estimatedCost : (t.partsCost + t.laborCost);
       const balance = cost - t.advancePaid;
       return sum + (balance > 0 ? balance : 0);

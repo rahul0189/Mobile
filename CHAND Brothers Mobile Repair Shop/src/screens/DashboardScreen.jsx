@@ -176,7 +176,8 @@ export default function DashboardScreen({
         ) : (
           <div className="tickets-grid">
             {filteredTickets.map(ticket => {
-              const balance = (ticket.estimatedCost > 0 ? ticket.estimatedCost : (ticket.partsCost + ticket.laborCost)) - ticket.advancePaid;
+              const isPaid = ticket.status === 'DELIVERED';
+              const balance = isPaid ? 0 : ((ticket.estimatedCost > 0 ? ticket.estimatedCost : (ticket.partsCost + ticket.laborCost)) - ticket.advancePaid);
               const isLowStockWarn = ticket.status === 'WAITING_FOR_PARTS';
               
               return (

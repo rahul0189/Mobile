@@ -27,7 +27,8 @@ export default function TicketDetailScreen({
     setTechNotes(ticket.technicianNotes || "");
   }, [ticket]);
 
-  const balance = (ticket.estimatedCost > 0 ? ticket.estimatedCost : (ticket.partsCost + ticket.laborCost)) - ticket.advancePaid;
+  const isPaid = ticket.status === 'DELIVERED';
+  const balance = isPaid ? 0 : ((ticket.estimatedCost > 0 ? ticket.estimatedCost : (ticket.partsCost + ticket.laborCost)) - ticket.advancePaid);
   const totalCost = ticket.estimatedCost > 0 ? ticket.estimatedCost : (ticket.partsCost + ticket.laborCost);
 
   const formatDate = (ms) => {

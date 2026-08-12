@@ -200,8 +200,17 @@ export default function App() {
   };
 
   const handleStatusChanged = (ticketId, newStatus, technicianNotes) => {
+    console.log("[CHAND DB] handleStatusChanged called with:", { ticketId, newStatus, technicianNotes });
     const ticketsDb = getTickets();
-    const idx = ticketsDb.findIndex(t => t.id == ticketId);
+    let idx = ticketsDb.findIndex(t => t.id == ticketId);
+    
+    if (idx === -1 && selectedTicket) {
+      console.warn("[CHAND DB] Loose ID match failed. Attempting fallback match using ticket number:", selectedTicket.ticketNumber);
+      idx = ticketsDb.findIndex(t => t.ticketNumber === selectedTicket.ticketNumber);
+    }
+    
+    console.log("[CHAND DB] Target ticket index resolved to:", idx);
+    
     if (idx !== -1) {
       ticketsDb[idx].status = newStatus;
       ticketsDb[idx].dateUpdatedMillis = Date.now();
@@ -209,6 +218,7 @@ export default function App() {
       if (notes.trim() !== "") {
         ticketsDb[idx].technicianNotes = notes.trim();
       }
+      
       // If auto sync with google is enabled & account connected
       if (googleAccount.isLoggedIn) {
         setSyncStatusMsg("Auto Backup: saving changes...");
@@ -217,7 +227,11 @@ export default function App() {
       
       // Update currently selected ticket details in view
       setSelectedTicket(ticketsDb[idx]);
+      console.log("[CHAND DB] Ticket updated successfully in memory:", ticketsDb[idx]);
+    } else {
+      console.error("[CHAND DB] Error: Could not find ticket matching ID or TicketNumber!");
     }
+    
     // Save to local storage
     saveTickets(ticketsDb);
     refreshDbState();

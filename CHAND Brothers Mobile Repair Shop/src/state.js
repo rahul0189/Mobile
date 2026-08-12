@@ -5,6 +5,7 @@ const STORAGE_KEYS = {
   PRODUCTS: 'chand_products',
   SMS_TEMPLATES: 'chand_sms_templates',
   AUTH: 'chand_auth_user',
+  SIM_SALES: 'chand_sim_sales',
 };
 
 // Initial data if storage is empty (started fresh)
@@ -48,6 +49,9 @@ export function initDb() {
   }
   if (!localStorage.getItem(STORAGE_KEYS.SMS_TEMPLATES)) {
     localStorage.setItem(STORAGE_KEYS.SMS_TEMPLATES, JSON.stringify(INITIAL_TEMPLATES));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.SIM_SALES)) {
+    localStorage.setItem(STORAGE_KEYS.SIM_SALES, JSON.stringify([]));
   }
 }
 
@@ -251,4 +255,43 @@ export function setAuthUser(user) {
     localStorage.removeItem(STORAGE_KEYS.AUTH);
   }
   window.dispatchEvent(new Event('chand_auth_update'));
+}
+
+// SIM Sales Operations
+export function getSimSales() {
+  initDb();
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.SIM_SALES)) || [];
+}
+
+export function saveSimSales(sales) {
+  localStorage.setItem(STORAGE_KEYS.SIM_SALES, JSON.stringify(sales));
+  window.dispatchEvent(new Event('chand_db_update'));
+}
+
+export function createOrUpdateSimSale(sale) {
+  const sales = getSimSales();
+  let updatedSale = { ...sale };
+
+  if (!sale.id) {
+    const maxId = sales.reduce((max, s) => s.id > max ? s.id : max, 0);
+    updatedSale.id = maxId + 1;
+    updatedSale.dateCreatedMillis = Date.now();
+    sales.push(updatedSale);
+  } else {
+    updatedSale.dateCreatedMillis = sale.dateCreatedMillis || Date.now();
+    updatedSale.dateUpdatedMillis = Date.now();
+    const idx = sales.findIndex(s => s.id == sale.id);
+    if (idx !== -1) {
+      sales[idx] = updatedSale;
+    }
+  }
+
+  saveSimSales(sales);
+  return updatedSale;
+}
+
+export function deleteSimSale(saleId) {
+  const sales = getSimSales();
+  const filtered = sales.filter(s => s.id != saleId);
+  saveSimSales(filtered);
 }

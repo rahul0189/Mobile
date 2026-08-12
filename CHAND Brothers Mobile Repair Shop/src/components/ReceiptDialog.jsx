@@ -6,8 +6,9 @@ export default function ReceiptDialog({
   ticket,
   onDismiss
 }) {
-  const balance = (ticket.estimatedCost > 0 ? ticket.estimatedCost : (ticket.partsCost + ticket.laborCost)) - ticket.advancePaid;
+  const isPaid = ticket.status === 'DELIVERED';
   const totalCost = ticket.estimatedCost > 0 ? ticket.estimatedCost : (ticket.partsCost + ticket.laborCost);
+  const balance = isPaid ? 0 : (totalCost - ticket.advancePaid);
 
   const formatDate = (ms) => {
     return new Date(ms).toLocaleDateString('en-IN', {

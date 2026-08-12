@@ -201,12 +201,13 @@ export default function App() {
 
   const handleStatusChanged = (ticketId, newStatus, technicianNotes) => {
     const ticketsDb = getTickets();
-    const idx = ticketsDb.findIndex(t => t.id === ticketId);
+    const idx = ticketsDb.findIndex(t => t.id == ticketId);
     if (idx !== -1) {
       ticketsDb[idx].status = newStatus;
       ticketsDb[idx].dateUpdatedMillis = Date.now();
-      if (technicianNotes.trim() !== "") {
-        ticketsDb[idx].technicianNotes = technicianNotes;
+      const notes = technicianNotes || "";
+      if (notes.trim() !== "") {
+        ticketsDb[idx].technicianNotes = notes.trim();
       }
       // If auto sync with google is enabled & account connected
       if (googleAccount.isLoggedIn) {

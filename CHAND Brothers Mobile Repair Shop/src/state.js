@@ -112,12 +112,13 @@ export function createOrUpdateTicket(ticket) {
 
 export function updateTicketStatus(ticketId, newStatus, technicianNotes = "") {
   const tickets = getTickets();
-  const idx = tickets.findIndex(t => t.id === ticketId);
+  const idx = tickets.findIndex(t => t.id == ticketId);
   if (idx !== -1) {
     tickets[idx].status = newStatus;
     tickets[idx].dateUpdatedMillis = Date.now();
-    if (technicianNotes.trim() !== "") {
-      tickets[idx].technicianNotes = technicianNotes;
+    const notes = technicianNotes || "";
+    if (notes.trim() !== "") {
+      tickets[idx].technicianNotes = notes.trim();
     }
     saveTickets(tickets);
   }

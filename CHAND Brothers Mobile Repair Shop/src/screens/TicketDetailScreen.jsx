@@ -21,6 +21,12 @@ export default function TicketDetailScreen({
   const [selectedStatus, setSelectedStatus] = useState(ticket.status);
   const [showStatusUpdateConfirm, setShowStatusUpdateConfirm] = useState(false);
 
+  // Sync state if ticket details are updated in parent component
+  React.useEffect(() => {
+    setSelectedStatus(ticket.status);
+    setTechNotes(ticket.technicianNotes || "");
+  }, [ticket]);
+
   const balance = (ticket.estimatedCost > 0 ? ticket.estimatedCost : (ticket.partsCost + ticket.laborCost)) - ticket.advancePaid;
   const totalCost = ticket.estimatedCost > 0 ? ticket.estimatedCost : (ticket.partsCost + ticket.laborCost);
 

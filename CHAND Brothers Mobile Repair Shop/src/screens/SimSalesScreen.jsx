@@ -17,8 +17,7 @@ export default function SimSalesScreen({
 
   // Compute metrics
   const totalSold = sales.length;
-  const jioCount = sales.filter(s => s.operator === 'Jio').length;
-  const airtelCount = sales.filter(s => s.operator === 'Airtel').length;
+  const viCount = sales.filter(s => s.operator === 'Vi').length;
   const totalRevenue = sales.reduce((sum, s) => sum + (s.amountCollected || 0), 0);
 
   // Toggle Aadhaar view
@@ -91,29 +90,18 @@ export default function SimSalesScreen({
           <div className="metric-info">
             <span className="metric-label">Total SIMs Sold</span>
             <span className="metric-val">{totalSold} Activations</span>
-            <span className="metric-subtext text-indigo">All operators ledger</span>
+            <span className="metric-subtext text-indigo">All activations ledger</span>
           </div>
         </div>
 
-        <div className="metric-card bg-glass" style={{ borderLeft: '4px solid #3b82f6' }}>
-          <div className="metric-icon" style={{ color: '#3b82f6' }}>
+        <div className="metric-card bg-glass" style={{ borderLeft: '4px solid #7c3aed' }}>
+          <div className="metric-icon" style={{ color: '#7c3aed' }}>
             <ShieldCheck size={24} />
           </div>
           <div className="metric-info">
-            <span className="metric-label">Jio Activations</span>
-            <span className="metric-val">{jioCount} SIMs</span>
-            <span className="metric-subtext" style={{ color: '#3b82f6' }}>Reliance Jio Infocomm</span>
-          </div>
-        </div>
-
-        <div className="metric-card bg-glass" style={{ borderLeft: '4px solid #ef4444' }}>
-          <div className="metric-icon" style={{ color: '#ef4444' }}>
-            <ShieldCheck size={24} />
-          </div>
-          <div className="metric-info">
-            <span className="metric-label">Airtel Activations</span>
-            <span className="metric-val">{airtelCount} SIMs</span>
-            <span className="metric-subtext" style={{ color: '#ef4444' }}>Bharti Airtel India</span>
+            <span className="metric-label">Vi Activations</span>
+            <span className="metric-val">{viCount} SIMs</span>
+            <span className="metric-subtext" style={{ color: '#7c3aed' }}>Vodafone Idea India</span>
           </div>
         </div>
 
@@ -130,19 +118,20 @@ export default function SimSalesScreen({
       </div>
 
       {/* Search & filters tools */}
-      <div className="search-filter-card card" style={{ marginBottom: '20px' }}>
-        <div className="search-box">
-          <Search size={18} className="search-icon" />
+      <div className="filter-section card" style={{ marginBottom: '20px' }}>
+        <div className="search-bar-wrapper">
+          <Search size={20} className="search-icon" />
           <input 
             type="text" 
             placeholder="Search by client name, allotted mobile number or Aadhaar card..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className="form-input search-input"
           />
         </div>
 
-        <div className="filter-tabs-container" style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {['ALL', 'JIO', 'AIRTEL', 'VI', 'BSNL', 'OTHER'].map(op => (
+        <div className="status-filter-tabs" style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {['ALL', 'VI'].map(op => (
             <button
               key={op}
               className={`filter-tab ${selectedOperator === op ? 'active' : ''}`}

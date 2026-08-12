@@ -9,7 +9,7 @@ export default function AddEditSimSaleDialog({
   const [customerName, setCustomerName] = useState("");
   const [allottedNumber, setAllottedNumber] = useState("");
   const [aadhaarNumber, setAadhaarNumber] = useState("");
-  const [operator, setOperator] = useState("Jio");
+  const [operator, setOperator] = useState("Vi");
   const [planType, setPlanType] = useState("PREPAID");
   const [planAmount, setPlanAmount] = useState("");
   const [amountCollected, setAmountCollected] = useState("");
@@ -151,11 +151,7 @@ export default function AddEditSimSaleDialog({
                 onChange={(e) => setOperator(e.target.value)}
                 required
               >
-                <option value="Jio">Jio</option>
-                <option value="Airtel">Airtel</option>
                 <option value="Vi">Vi (Vodafone Idea)</option>
-                <option value="BSNL">BSNL</option>
-                <option value="Other">Other</option>
               </select>
             </div>
 

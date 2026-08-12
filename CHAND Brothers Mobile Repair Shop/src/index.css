@@ -294,7 +294,7 @@ textarea.form-input {
   width: var(--sidebar-width);
   background-color: #05080e;
   border-right: 1px solid var(--color-border);
-  display: flex;
+  display: none; /* Hide on desktop */
   flex-direction: column;
   z-index: 900;
   transition: var(--transition-smooth);
@@ -2530,6 +2530,7 @@ textarea.form-input {
     display: flex;
   }
   .sidebar-navigation {
+    display: flex !important;
     transform: translateX(-100%);
   }
   .sidebar-navigation.open {

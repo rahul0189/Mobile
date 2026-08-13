@@ -38,6 +38,7 @@ export default function App() {
   const [phoneLogin, setPhoneLogin] = useState("");
   const [techNameLogin, setTechNameLogin] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [passwordLogin, setPasswordLogin] = useState("");
 
@@ -157,7 +158,23 @@ export default function App() {
 
     const techs = getRegisteredTechnicians();
 
-    if (isSignUp) {
+    if (isForgotPassword) {
+      const idx = techs.findIndex(t => t.phone === phone);
+      if (idx === -1) {
+        setLoginError("This mobile number is not registered yet. Please select Sign Up!");
+        return;
+      }
+
+      techs[idx].password = password;
+      localStorage.setItem('chand_registered_technicians', JSON.stringify(techs));
+
+      // Log in
+      setAuthUser(techs[idx]);
+      setAuthUserLocal(techs[idx]);
+      setPasswordLogin("");
+      setIsForgotPassword(false);
+      refreshDbState();
+    } else if (isSignUp) {
       if (!name) {
         setLoginError("Please enter your name.");
         return;
@@ -407,9 +424,10 @@ export default function App() {
             <div className="auth-tab-buttons">
               <button 
                 type="button"
-                className={`auth-tab-btn ${!isSignUp ? 'active' : ''}`}
+                className={`auth-tab-btn ${!isSignUp && !isForgotPassword ? 'active' : ''}`}
                 onClick={() => {
                   setIsSignUp(false);
+                  setIsForgotPassword(false);
                   setLoginError("");
                 }}
               >
@@ -420,11 +438,21 @@ export default function App() {
                 className={`auth-tab-btn ${isSignUp ? 'active' : ''}`}
                 onClick={() => {
                   setIsSignUp(true);
+                  setIsForgotPassword(false);
                   setLoginError("");
                 }}
               >
                 Sign Up
               </button>
+              {isForgotPassword && (
+                <button 
+                  type="button"
+                  className="auth-tab-btn active"
+                  style={{ pointerEvents: 'none' }}
+                >
+                  Reset Pass
+                </button>
+              )}
             </div>
 
             <div className="login-tabs">
@@ -436,7 +464,7 @@ export default function App() {
               )}
 
               <form onSubmit={handleAuthSubmit} className="phone-login-form">
-                {isSignUp && (
+                {isSignUp && !isForgotPassword && (
                   <div className="form-group">
                     <label>Technician Name</label>
                     <div className="input-with-icon">
@@ -469,7 +497,7 @@ export default function App() {
                 </div>
 
                 <div className="form-group">
-                  <label>Password</label>
+                  <label>{isForgotPassword ? "New Password" : "Password"}</label>
                   <div className="input-with-icon">
                     <Lock size={16} className="input-icon" />
                     <input 
@@ -477,14 +505,44 @@ export default function App() {
                       className="form-input" 
                       value={passwordLogin} 
                       onChange={(e) => setPasswordLogin(e.target.value)} 
-                      placeholder={isSignUp ? "Create a login password" : "Enter your password (e.g. 123)"}
+                      placeholder={isSignUp ? "Create a login password" : isForgotPassword ? "Create a new password" : "Enter your password (e.g. 123)"}
                       required
                     />
                   </div>
                 </div>
 
+                {!isSignUp && !isForgotPassword && (
+                  <div style={{ textAlign: 'right', marginTop: '-12px', marginBottom: '16px' }}>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setIsForgotPassword(true);
+                        setLoginError("");
+                      }}
+                      style={{ background: 'none', border: 'none', color: 'var(--color-cyan)', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                )}
+
+                {isForgotPassword && (
+                  <div style={{ textAlign: 'right', marginTop: '-12px', marginBottom: '16px' }}>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setIsForgotPassword(false);
+                        setLoginError("");
+                      }}
+                      style={{ background: 'none', border: 'none', color: 'var(--color-cyan)', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      Back to login
+                    </button>
+                  </div>
+                )}
+
                 <button type="submit" className="btn btn-primary auth-submit-btn" style={{ width: '100%', marginTop: '10px' }}>
-                  {isSignUp ? "Register & Access Panel" : "Login & Access Panel"}
+                  {isForgotPassword ? "Reset Password & Login" : isSignUp ? "Register & Access Panel" : "Login & Access Panel"}
                 </button>
               </form>
             </div>

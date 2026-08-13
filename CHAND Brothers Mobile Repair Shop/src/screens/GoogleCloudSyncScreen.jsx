@@ -41,7 +41,8 @@ export default function GoogleCloudSyncScreen({
     setSyncType("info");
 
     try {
-      const response = await fetch('https://kvdb.io/', {
+      const targetUrl = 'https://kvdb.io/';
+      const response = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetUrl), {
         method: 'POST'
       });
 
@@ -114,7 +115,8 @@ export default function GoogleCloudSyncScreen({
     };
 
     try {
-      const response = await fetch(`https://kvdb.io/${bucketId}/shop_database`, {
+      const targetUrl = `https://kvdb.io/${bucketId}/shop_database`;
+      const response = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetUrl), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -152,7 +154,8 @@ export default function GoogleCloudSyncScreen({
     setSyncType("info");
 
     try {
-      const response = await fetch(`https://kvdb.io/${bucketId}/shop_database`);
+      const targetUrl = `https://kvdb.io/${bucketId}/shop_database`;
+      const response = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetUrl));
       
       if (!response.ok) {
         throw new Error("No backup found or server error.");

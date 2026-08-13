@@ -13,6 +13,8 @@ import {
   getSimSales, saveSimSales, createOrUpdateSimSale, deleteSimSale
 } from './state';
 
+import { initCloudSync, fetchCloudData, saveCloudData } from './syncService';
+
 // Import Screens
 import DashboardScreen from './screens/DashboardScreen';
 import TicketDetailScreen from './screens/TicketDetailScreen';
@@ -88,6 +90,17 @@ export default function App() {
     setSmsTemplates(getSmsTemplates());
     setSimSales(getSimSales());
 
+    // Silently sync from cloud on load if technician is logged in
+    const user = getAuthUser();
+    if (user && user.phone) {
+      fetchCloudData(user.phone, () => {
+        setTickets(getTickets());
+        setProducts(getProducts());
+        setSmsTemplates(getSmsTemplates());
+        setSimSales(getSimSales());
+      });
+    }
+
     // Listen for database updates
     const handleDbUpdate = () => {
       setTickets(getTickets());
@@ -126,6 +139,12 @@ export default function App() {
     setProducts(getProducts());
     setSmsTemplates(getSmsTemplates());
     setSimSales(getSimSales());
+
+    // Silently push changes to cloud database in background
+    const user = getAuthUser();
+    if (user && user.phone) {
+      saveCloudData(user.phone);
+    }
   };
 
   // Registered Technicians DB helper
@@ -193,6 +212,7 @@ export default function App() {
       setAuthUserLocal(newUser);
       setPasswordLogin("");
       refreshDbState();
+      fetchCloudData(newUser.phone, refreshDbState);
     } else {
       const exists = techs.find(t => t.phone === phone);
       if (!exists) {
@@ -212,6 +232,7 @@ export default function App() {
       setAuthUserLocal(exists);
       setPasswordLogin("");
       refreshDbState();
+      fetchCloudData(exists.phone, refreshDbState);
     }
   };
 

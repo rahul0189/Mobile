@@ -39,10 +39,7 @@ export default function App() {
   const [techNameLogin, setTechNameLogin] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [loginError, setLoginError] = useState("");
-  const [showOtpVerification, setShowOtpVerification] = useState(false);
-  const [otpInput, setOtpInput] = useState("");
-  const [otpError, setOtpError] = useState("");
-  const [pendingUserObj, setPendingUserObj] = useState(null);
+  const [passwordLogin, setPasswordLogin] = useState("");
 
   // Navigation State
   const [currentDestination, setCurrentDestination] = useState("REPAIR_TICKETS");
@@ -133,8 +130,8 @@ export default function App() {
   const getRegisteredTechnicians = () => {
     let techs = localStorage.getItem('chand_registered_technicians');
     if (!techs) {
-      // Prepopulate with 'Rahul' account from his screenshots
-      const initialTechs = [{ name: "Rahul", phone: "7986911294" }];
+      // Prepopulate with 'Rahul' account with default password '123'
+      const initialTechs = [{ name: "Rahul", phone: "7986911294", password: "123" }];
       localStorage.setItem('chand_registered_technicians', JSON.stringify(initialTechs));
       return initialTechs;
     }
@@ -146,14 +143,19 @@ export default function App() {
     setLoginError("");
     const phone = phoneLogin.trim();
     const name = techNameLogin.trim();
+    const password = passwordLogin.trim();
 
     if (!phone) {
       setLoginError("Please enter your mobile number.");
       return;
     }
 
+    if (!password) {
+      setLoginError("Please enter your password.");
+      return;
+    }
+
     const techs = getRegisteredTechnicians();
-    let targetUser = null;
 
     if (isSignUp) {
       if (!name) {
@@ -166,7 +168,15 @@ export default function App() {
         return;
       }
 
-      targetUser = { name, phone, provider: "phone" };
+      const newUser = { name, phone, password, provider: "phone" };
+      techs.push(newUser);
+      localStorage.setItem('chand_registered_technicians', JSON.stringify(techs));
+
+      // Log in immediately
+      setAuthUser(newUser);
+      setAuthUserLocal(newUser);
+      setPasswordLogin("");
+      refreshDbState();
     } else {
       const exists = techs.find(t => t.phone === phone);
       if (!exists) {
@@ -174,38 +184,18 @@ export default function App() {
         return;
       }
 
-      targetUser = exists;
-    }
-
-    // Trigger OTP modal instead of signing in immediately
-    setPendingUserObj(targetUser);
-    setShowOtpVerification(true);
-    setOtpInput("");
-    setOtpError("");
-  };
-
-  const handleVerifyOtp = (e) => {
-    e.preventDefault();
-    setOtpError("");
-
-    if (otpInput === "1234") {
-      // If signing up, save new account to database
-      if (isSignUp && pendingUserObj) {
-        const techs = getRegisteredTechnicians();
-        techs.push(pendingUserObj);
-        localStorage.setItem('chand_registered_technicians', JSON.stringify(techs));
+      // Check password (fallback to '123' if not set in legacy account)
+      const correctPassword = exists.password || "123";
+      if (password !== correctPassword) {
+        setLoginError("Invalid password. Please try again.");
+        return;
       }
 
       // Log in
-      setAuthUser(pendingUserObj);
-      setAuthUserLocal(pendingUserObj);
-
-      // Clean up states
-      setShowOtpVerification(false);
-      setPendingUserObj(null);
-      setOtpInput("");
-    } else {
-      setOtpError("Invalid verification code! Try entering '1234'.");
+      setAuthUser(exists);
+      setAuthUserLocal(exists);
+      setPasswordLogin("");
+      refreshDbState();
     }
   };
 
@@ -473,6 +463,21 @@ export default function App() {
                       value={phoneLogin} 
                       onChange={(e) => setPhoneLogin(e.target.value)} 
                       placeholder="e.g. 7986911294"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Password</label>
+                  <div className="input-with-icon">
+                    <Lock size={16} className="input-icon" />
+                    <input 
+                      type="password" 
+                      className="form-input" 
+                      value={passwordLogin} 
+                      onChange={(e) => setPasswordLogin(e.target.value)} 
+                      placeholder={isSignUp ? "Create a login password" : "Enter your password (e.g. 123)"}
                       required
                     />
                   </div>
@@ -904,64 +909,7 @@ export default function App() {
         />
       )}
 
-      {/* OTP Verification Modal Overlay */}
-      {showOtpVerification && (
-        <div className="login-screen-overlay otp-overlay" style={{ zIndex: 1600 }}>
-          <div className="login-card card otp-card">
-            <div className="login-header">
-              <div className="shop-logo">
-                <Smartphone size={32} />
-              </div>
-              <h1>OTP VERIFICATION</h1>
-              <p>Enter the 4-digit code sent to +91 {obfuscatePhone(phoneLogin)}</p>
-            </div>
 
-            {otpError && (
-              <div className="auth-error-alert">
-                <ShieldAlert size={16} />
-                <span>{otpError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleVerifyOtp} className="phone-login-form">
-              <div className="form-group">
-                <label style={{ textAlign: 'center', display: 'block', fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
-                  Please enter <strong>1234</strong> to unlock the tech console
-                </label>
-                <input 
-                  type="text" 
-                  maxLength={4}
-                  className="form-input otp-digit-input" 
-                  value={otpInput} 
-                  onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ""))} 
-                  placeholder="• • • •"
-                  style={{ textAlign: 'center', fontSize: '24px', letterSpacing: '8px', height: '54px' }}
-                  required
-                  autoFocus
-                />
-              </div>
-
-              <div className="form-row split-2" style={{ marginTop: '10px' }}>
-                <button 
-                  type="button" 
-                  className="btn btn-secondary" 
-                  onClick={() => {
-                    setShowOtpVerification(false);
-                    setPendingUserObj(null);
-                    setOtpInput("");
-                    setOtpError("");
-                  }}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Verify Code
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </>
   );
 }

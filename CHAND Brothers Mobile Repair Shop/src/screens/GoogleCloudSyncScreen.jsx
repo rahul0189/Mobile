@@ -34,39 +34,7 @@ export default function GoogleCloudSyncScreen({
     }
   }, []);
 
-  // Generate a brand new cloud sync key on kvdb.io
-  const handleGenerateKey = async () => {
-    setIsSyncing(true);
-    setSyncMsg("Generating secure Cloud Sync Key...");
-    setSyncType("info");
-
-    try {
-      const targetUrl = 'https://kvdb.io/';
-      const response = await fetch('https://corsproxy.io/?' + encodeURIComponent(targetUrl), {
-        method: 'POST'
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create bucket on server.");
-      }
-
-      const newBucketId = (await response.text()).trim();
-      if (newBucketId) {
-        localStorage.setItem('chand_cloud_bucket_id', newBucketId);
-        setBucketId(newBucketId);
-        setSyncMsg("New Sync Key generated! Share this key with other devices to link them.");
-        setSyncType("success");
-      }
-    } catch (e) {
-      console.error(e);
-      setSyncMsg("Failed to generate Sync Key. Check internet connection.");
-      setSyncType("error");
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  // Connect an existing sync key
+  // Connect a sync key
   const handleConnectKey = (e) => {
     e.preventDefault();
     setSyncMsg("");
@@ -81,7 +49,7 @@ export default function GoogleCloudSyncScreen({
     localStorage.setItem('chand_cloud_bucket_id', cleanKey);
     setBucketId(cleanKey);
     setInputKey("");
-    setSyncMsg("Device successfully linked! Click 'Restore from Cloud' to download data.");
+    setSyncMsg("Device successfully linked! Click 'Restore from Cloud' to download your tickets.");
     setSyncType("success");
   };
 
@@ -97,7 +65,7 @@ export default function GoogleCloudSyncScreen({
     }
   };
 
-  // Perform a 1-click cloud backup
+  // Perform a 1-click cloud backup (Direct fetch - CORS allowed on KVdb keys!)
   const handleCloudBackup = async () => {
     if (!bucketId) return;
 
@@ -115,8 +83,7 @@ export default function GoogleCloudSyncScreen({
     };
 
     try {
-      const targetUrl = `https://kvdb.io/${bucketId}/shop_database`;
-      const response = await fetch('https://corsproxy.io/?' + encodeURIComponent(targetUrl), {
+      const response = await fetch(`https://kvdb.io/${bucketId}/shop_database`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -141,7 +108,7 @@ export default function GoogleCloudSyncScreen({
     }
   };
 
-  // Perform a 1-click cloud restore
+  // Perform a 1-click cloud restore (Direct fetch - CORS allowed on KVdb keys!)
   const handleCloudRestore = async () => {
     if (!bucketId) return;
 
@@ -154,8 +121,7 @@ export default function GoogleCloudSyncScreen({
     setSyncType("info");
 
     try {
-      const targetUrl = `https://kvdb.io/${bucketId}/shop_database`;
-      const response = await fetch('https://corsproxy.io/?' + encodeURIComponent(targetUrl));
+      const response = await fetch(`https://kvdb.io/${bucketId}/shop_database`);
       
       if (!response.ok) {
         throw new Error("No backup found or server error.");
@@ -370,26 +336,13 @@ export default function GoogleCloudSyncScreen({
               )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-                {/* Option 1: Generate Key */}
+                {/* Connecting Existing Key */}
                 <div style={{ padding: '16px', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                  <span style={{ display: 'block', fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '8px', fontWeight: 600 }}>Option A: Fresh Setup</span>
-                  <button 
-                    className="btn btn-primary" 
-                    onClick={handleGenerateKey} 
-                    disabled={isSyncing}
-                    style={{ width: '100%' }}
-                  >
-                    <Key size={16} /> Generate New Sync Key
-                  </button>
-                </div>
-
-                {/* Option 2: Connect Existing Key */}
-                <div style={{ padding: '16px', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                  <span style={{ display: 'block', fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '8px', fontWeight: 600 }}>Option B: Link to Another Device</span>
-                  <form onSubmit={handleConnectKey} style={{ display: 'flex', gap: '8px' }}>
+                  <span style={{ display: 'block', fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '12px', fontWeight: 600 }}>Link Shop Sync Key</span>
+                  <form onSubmit={handleConnectKey} style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
                     <input 
                       type="text" 
-                      placeholder="Paste Sync Key here..." 
+                      placeholder="Paste or type your Sync Key..." 
                       className="form-input" 
                       value={inputKey}
                       onChange={(e) => setInputKey(e.target.value)}
@@ -400,6 +353,9 @@ export default function GoogleCloudSyncScreen({
                       <Link2 size={16} /> Link
                     </button>
                   </form>
+                  <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', textAlign: 'left', lineHeight: '1.4' }}>
+                    * To get your unique Key, open the terminal in your project code on your PC and run: <code style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '2px 4px', borderRadius: '3px', color: 'var(--color-cyan)', fontSize: '10px' }}>curl -X POST https://kvdb.io/</code>. Copy the returned key and paste it here!
+                  </p>
                 </div>
               </div>
             </div>

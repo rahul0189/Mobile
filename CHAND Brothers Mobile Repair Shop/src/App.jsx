@@ -873,16 +873,9 @@ export default function App() {
                   case "GOOGLE_CLOUD_SYNC":
                     return (
                       <GoogleCloudSyncScreen
-                        accountInfo={googleAccount}
-                        isSyncing={isSyncing}
-                        syncStatusMessage={syncStatusMsg}
-                        onSignIn={handleGoogleSignIn}
-                        onSignOut={handleGoogleSignOut}
-                        onToggleAutoSync={() => {}}
-                        onPerformBackup={handleBackupNow}
-                        onPerformRestore={handleRestoreSync}
-                        onRestoreCustomJson={handleCustomJsonRestore}
+                        authUser={authUser}
                         onOpenDrawer={() => setIsSidebarOpen(true)}
+                        onRefreshDb={refreshDbState}
                       />
                     );
                   default:

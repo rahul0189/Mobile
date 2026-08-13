@@ -473,7 +473,7 @@ export default function App() {
                         className="form-input" 
                         value={techNameLogin} 
                         onChange={(e) => setTechNameLogin(e.target.value)} 
-                        placeholder="e.g. Rahul Chand"
+                        placeholder="Enter your name"
                         required
                       />
                     </div>
@@ -489,7 +489,7 @@ export default function App() {
                       className="form-input" 
                       value={phoneLogin} 
                       onChange={(e) => setPhoneLogin(e.target.value)} 
-                      placeholder="e.g. 7986911294"
+                      placeholder="Enter mobile number"
                       required
                     />
                   </div>
@@ -504,7 +504,7 @@ export default function App() {
                       className="form-input" 
                       value={passwordLogin} 
                       onChange={(e) => setPasswordLogin(e.target.value)} 
-                      placeholder={isSignUp ? "Create a login password" : isForgotPassword ? "Create a new password" : "Enter your password (e.g. 123)"}
+                      placeholder={isSignUp ? "Create password" : isForgotPassword ? "Create new password" : "Enter password"}
                       required
                     />
                   </div>

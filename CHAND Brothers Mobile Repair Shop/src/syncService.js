@@ -20,21 +20,23 @@ export async function initCloudSync() {
   }
 
   try {
-    // 1. Fetch shared bucket ID from immanuel.co directory service
+    // 1. Fetch shared bucket ID from immanuel.co directory service (GET is CORS-friendly)
     const response = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${IMMANUEL_KEY}/${IMMANUEL_VAL_KEY}`);
     const data = await response.text();
     let bucketId = data ? data.replace(/"/g, "").trim() : "";
 
     // 2. If no bucket exists in directory, create a new one on kvdb.io via CORS proxy
     if (!bucketId || bucketId.includes("error") || bucketId.length < 5) {
-      const createRes = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://kvdb.io/'), {
+      const targetUrl = 'https://kvdb.io/';
+      const createRes = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetUrl), {
         method: 'POST'
       });
       if (createRes.ok) {
         bucketId = (await createRes.text()).trim();
         if (bucketId) {
-          // Save newly created bucket ID back to immanuel.co directory for all other devices
-          await fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${IMMANUEL_KEY}/${IMMANUEL_VAL_KEY}/${bucketId}`, {
+          // Save newly created bucket ID back to immanuel.co directory (POST via proxy to avoid preflight blocks)
+          const updateUrl = `https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${IMMANUEL_KEY}/${IMMANUEL_VAL_KEY}/${bucketId}`;
+          await fetch('https://corsproxy.io/?url=' + encodeURIComponent(updateUrl), {
             method: 'POST'
           });
         }
@@ -53,15 +55,17 @@ export async function initCloudSync() {
   return "";
 }
 
-// Fetch and load database backup from the cloud silently
+// Fetch and load database backup from the cloud silently (via CORS Proxy)
 export async function fetchCloudData(phone, onUpdate) {
   if (!phone) return null;
   const bucket = await initCloudSync();
   if (!bucket) return null;
 
   const cleanPhone = phone.replace(/\D/g, "");
+  const targetUrl = `https://kvdb.io/${bucket}/backup_${cleanPhone}`;
+
   try {
-    const response = await fetch(`https://kvdb.io/${bucket}/backup_${cleanPhone}`);
+    const response = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetUrl));
     if (!response.ok) return null;
 
     const data = await response.json();
@@ -81,7 +85,7 @@ export async function fetchCloudData(phone, onUpdate) {
   return null;
 }
 
-// Save database backup to the cloud silently
+// Save database backup to the cloud silently (via CORS Proxy)
 export async function saveCloudData(phone) {
   if (!phone) return;
   const bucket = await initCloudSync();
@@ -96,8 +100,10 @@ export async function saveCloudData(phone) {
     backupTime: Date.now()
   };
 
+  const targetUrl = `https://kvdb.io/${bucket}/backup_${cleanPhone}`;
+
   try {
-    await fetch(`https://kvdb.io/${bucket}/backup_${cleanPhone}`, {
+    await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetUrl), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

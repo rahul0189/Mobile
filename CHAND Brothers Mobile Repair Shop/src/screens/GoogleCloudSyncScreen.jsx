@@ -83,7 +83,8 @@ export default function GoogleCloudSyncScreen({
     };
 
     try {
-      const response = await fetch(`https://kvdb.io/${bucketId}/shop_database`, {
+      const targetUrl = `https://kvdb.io/${bucketId}/shop_database`;
+      const response = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetUrl), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -108,7 +109,7 @@ export default function GoogleCloudSyncScreen({
     }
   };
 
-  // Perform a 1-click cloud restore (Direct fetch - CORS allowed on KVdb keys!)
+  // Perform a 1-click cloud restore
   const handleCloudRestore = async () => {
     if (!bucketId) return;
 
@@ -121,7 +122,8 @@ export default function GoogleCloudSyncScreen({
     setSyncType("info");
 
     try {
-      const response = await fetch(`https://kvdb.io/${bucketId}/shop_database`);
+      const targetUrl = `https://kvdb.io/${bucketId}/shop_database`;
+      const response = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetUrl));
       
       if (!response.ok) {
         throw new Error("No backup found or server error.");

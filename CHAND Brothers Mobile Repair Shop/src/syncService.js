@@ -4,7 +4,7 @@ const IMMANUEL_KEY = "chand_brothers_shop_app";
 const IMMANUEL_VAL_KEY = "bucket_key";
 
 // Local storage key for resolved bucket ID cache
-const CACHE_KEY = "chand_shared_bucket_id_cache";
+const CACHE_KEY = "chand_shared_bucket_id_cache_v2";
 
 let resolvedBucketId = "";
 
@@ -26,7 +26,13 @@ export async function initCloudSync() {
     let bucketId = data ? data.replace(/"/g, "").trim() : "";
 
     // 2. If no bucket exists in directory, create a new one on kvdb.io via CORS proxy
-    if (!bucketId || bucketId.includes("error") || bucketId.length < 5) {
+    const isInvalid = !bucketId || 
+                      bucketId.includes("error") || 
+                      bucketId.toLowerCase().includes("not found") || 
+                      bucketId.toLowerCase().includes("notfound") ||
+                      bucketId.length < 10;
+
+    if (isInvalid) {
       const targetUrl = 'https://kvdb.io/';
       const createRes = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetUrl), {
         method: 'POST'

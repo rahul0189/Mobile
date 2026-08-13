@@ -40,6 +40,7 @@ export default function App() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
+  const [loginSuccess, setLoginSuccess] = useState("");
   const [passwordLogin, setPasswordLogin] = useState("");
 
   // Navigation State
@@ -168,12 +169,10 @@ export default function App() {
       techs[idx].password = password;
       localStorage.setItem('chand_registered_technicians', JSON.stringify(techs));
 
-      // Log in
-      setAuthUser(techs[idx]);
-      setAuthUserLocal(techs[idx]);
+      // Go back to login screen with success message, DO NOT auto-login
       setPasswordLogin("");
       setIsForgotPassword(false);
-      refreshDbState();
+      setLoginSuccess("Password reset successfully! Please log in with your new password.");
     } else if (isSignUp) {
       if (!name) {
         setLoginError("Please enter your name.");
@@ -418,48 +417,48 @@ export default function App() {
                 <Wrench size={32} />
               </div>
               <h1>CHAND BROTHERS</h1>
-              <p>Mobile Tech Dashboard Access</p>
+              <p>{isForgotPassword ? "Reset Technician Password" : "Mobile Tech Dashboard Access"}</p>
             </div>
 
-            <div className="auth-tab-buttons">
-              <button 
-                type="button"
-                className={`auth-tab-btn ${!isSignUp && !isForgotPassword ? 'active' : ''}`}
-                onClick={() => {
-                  setIsSignUp(false);
-                  setIsForgotPassword(false);
-                  setLoginError("");
-                }}
-              >
-                Login
-              </button>
-              <button 
-                type="button"
-                className={`auth-tab-btn ${isSignUp ? 'active' : ''}`}
-                onClick={() => {
-                  setIsSignUp(true);
-                  setIsForgotPassword(false);
-                  setLoginError("");
-                }}
-              >
-                Sign Up
-              </button>
-              {isForgotPassword && (
+            {!isForgotPassword && (
+              <div className="auth-tab-buttons">
                 <button 
                   type="button"
-                  className="auth-tab-btn active"
-                  style={{ pointerEvents: 'none' }}
+                  className={`auth-tab-btn ${!isSignUp ? 'active' : ''}`}
+                  onClick={() => {
+                    setIsSignUp(false);
+                    setLoginError("");
+                    setLoginSuccess("");
+                  }}
                 >
-                  Reset Pass
+                  Login
                 </button>
-              )}
-            </div>
+                <button 
+                  type="button"
+                  className={`auth-tab-btn ${isSignUp ? 'active' : ''}`}
+                  onClick={() => {
+                    setIsSignUp(true);
+                    setLoginError("");
+                    setLoginSuccess("");
+                  }}
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
 
             <div className="login-tabs">
               {loginError && (
                 <div className="auth-error-alert">
                   <ShieldAlert size={16} />
                   <span>{loginError}</span>
+                </div>
+              )}
+
+              {loginSuccess && (
+                <div className="auth-error-alert" style={{ backgroundColor: 'rgba(16,185,129,0.12)', color: '#10b981', borderColor: 'rgba(16,185,129,0.2)' }}>
+                  <CheckCircle2 size={16} />
+                  <span>{loginSuccess}</span>
                 </div>
               )}
 

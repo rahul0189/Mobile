@@ -124,10 +124,10 @@ export default function App() {
 
   // Set up periodic cloud synchronization whenever the logged-in technician changes
   useEffect(() => {
-    if (!authUserLocal || !authUserLocal.phone) return;
+    if (!authUser || !authUser.phone) return;
 
     const runSync = () => {
-      fetchCloudData(authUserLocal.phone, () => {
+      fetchCloudData(authUser.phone, () => {
         setTickets(getTickets());
         setProducts(getProducts());
         setSmsTemplates(getSmsTemplates());
@@ -142,7 +142,7 @@ export default function App() {
     const interval = setInterval(runSync, 10000);
 
     return () => clearInterval(interval);
-  }, [authUserLocal]);
+  }, [authUser]);
 
   // Sync state to local variables on manual changes
   const refreshDbState = () => {

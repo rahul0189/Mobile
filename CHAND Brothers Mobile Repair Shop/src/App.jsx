@@ -13,7 +13,7 @@ import {
   getSimSales, saveSimSales, createOrUpdateSimSale, deleteSimSale
 } from './state';
 
-import { initCloudSync, fetchCloudData, saveCloudData } from './syncService';
+import { initCloudSync, fetchCloudData, saveCloudData, syncCloudDatabase } from './syncService';
 
 // Import Screens
 import DashboardScreen from './screens/DashboardScreen';
@@ -127,7 +127,7 @@ export default function App() {
     if (!authUser || !authUser.phone) return;
 
     const runSync = () => {
-      fetchCloudData(authUser.phone, () => {
+      syncCloudDatabase(authUser.phone, () => {
         setTickets(getTickets());
         setProducts(getProducts());
         setSmsTemplates(getSmsTemplates());
@@ -145,16 +145,24 @@ export default function App() {
   }, [authUser]);
 
   // Sync state to local variables on manual changes
-  const refreshDbState = () => {
+  const refreshDbState = (isLocalMutation = false) => {
     setTickets(getTickets());
     setProducts(getProducts());
     setSmsTemplates(getSmsTemplates());
     setSimSales(getSimSales());
 
-    // Silently push changes to cloud database in background
-    const user = getAuthUser();
-    if (user && user.phone) {
-      saveCloudData(user.phone);
+    // Silently push changes to cloud database if this is a user-triggered write action
+    if (isLocalMutation) {
+      localStorage.setItem('chand_last_local_write_time', Date.now().toString());
+      const user = getAuthUser();
+      if (user && user.phone) {
+        syncCloudDatabase(user.phone, () => {
+          setTickets(getTickets());
+          setProducts(getProducts());
+          setSmsTemplates(getSmsTemplates());
+          setSimSales(getSimSales());
+        });
+      }
     }
   };
 
@@ -223,7 +231,6 @@ export default function App() {
       setAuthUserLocal(newUser);
       setPasswordLogin("");
       refreshDbState();
-      fetchCloudData(newUser.phone, refreshDbState);
     } else {
       const exists = techs.find(t => t.phone === phone);
       if (!exists) {
@@ -243,7 +250,6 @@ export default function App() {
       setAuthUserLocal(exists);
       setPasswordLogin("");
       refreshDbState();
-      fetchCloudData(exists.phone, refreshDbState);
     }
   };
 
@@ -301,7 +307,7 @@ export default function App() {
       if (data.simSales) {
         saveSimSales(data.simSales);
       }
-      refreshDbState();
+      refreshDbState(true);
       const simMsg = data.simSales ? `, ${data.simSales.length} SIM records` : "";
       callback(true, `Database restored successfully. Loaded ${data.tickets.length} tickets, ${data.products.length} products${simMsg}.`);
     } catch(e) {
@@ -314,13 +320,13 @@ export default function App() {
     createOrUpdateSimSale(saleData);
     setShowAddEditSimSaleDialog(false);
     setEditingSimSale(null);
-    refreshDbState();
+    refreshDbState(true);
   };
 
   const handleDeleteSimSale = (id) => {
     if (confirm("Are you sure you want to delete this SIM sale record?")) {
       deleteSimSale(id);
-      refreshDbState();
+      refreshDbState(true);
     }
   };
 
@@ -337,7 +343,7 @@ export default function App() {
       const updatedT = allT.find(t => t.id === ticketData.id);
       setSelectedTicket(updatedT);
     }
-    refreshDbState();
+    refreshDbState(true);
   };
 
   const handleStatusChanged = (ticketId, newStatus, technicianNotes) => {
@@ -375,7 +381,7 @@ export default function App() {
     
     // Save to local storage
     saveTickets(ticketsDb);
-    refreshDbState();
+    refreshDbState(true);
   };
 
   const handlePrepareSms = (ticket, statusKey) => {
@@ -396,12 +402,12 @@ export default function App() {
     createOrUpdateProduct(prodData);
     setShowAddEditProductDialog(false);
     setEditingProduct(null);
-    refreshDbState();
+    refreshDbState(true);
   };
 
   const handleAdjustQuantity = (productId, delta) => {
     adjustProductQuantity(productId, delta);
-    refreshDbState();
+    refreshDbState(true);
   };
 
   // Calculate low stock metrics

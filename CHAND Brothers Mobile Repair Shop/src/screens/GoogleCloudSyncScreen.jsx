@@ -5,6 +5,7 @@ import {
   Sparkles, CheckCircle2, Copy, Key, Link2, LogOut
 } from 'lucide-react';
 import { getTickets, getProducts, getSmsTemplates } from '../state';
+import { BUCKET_ID } from '../bucketConfig';
 
 export default function GoogleCloudSyncScreen({
   authUser,
@@ -24,9 +25,10 @@ export default function GoogleCloudSyncScreen({
 
   // Load bucket configuration on mount
   useEffect(() => {
-    const savedBucket = localStorage.getItem('chand_cloud_bucket_id');
+    const savedBucket = localStorage.getItem('chand_cloud_bucket_id') || BUCKET_ID;
     if (savedBucket) {
       setBucketId(savedBucket);
+      localStorage.setItem('chand_cloud_bucket_id', savedBucket);
       const storedTime = localStorage.getItem(`chand_last_backup_time`);
       if (storedTime) {
         setLastBackupTime(Number(storedTime));
@@ -84,7 +86,7 @@ export default function GoogleCloudSyncScreen({
 
     try {
       const targetUrl = `https://kvdb.io/${bucketId}/shop_database`;
-      const response = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetUrl), {
+      const response = await fetch(targetUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -123,7 +125,7 @@ export default function GoogleCloudSyncScreen({
 
     try {
       const targetUrl = `https://kvdb.io/${bucketId}/shop_database`;
-      const response = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetUrl));
+      const response = await fetch(targetUrl);
       
       if (!response.ok) {
         throw new Error("No backup found or server error.");

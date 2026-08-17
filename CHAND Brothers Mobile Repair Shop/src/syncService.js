@@ -4,24 +4,20 @@ const IMMANUEL_KEY = "chand_brothers_shop_app";
 const IMMANUEL_VAL_KEY = "bucket_key";
 
 // Local storage key for resolved bucket ID cache
-const CACHE_KEY = "chand_shared_bucket_id_cache_v2";
-
-let resolvedBucketId = "";
+const CACHE_KEY = "chand_cloud_bucket_id";
 
 // Initialize and resolve the shared cloud bucket ID
 export async function initCloudSync() {
-  if (resolvedBucketId) return resolvedBucketId;
-
   // Check local cache first
   const cached = localStorage.getItem(CACHE_KEY);
   if (cached) {
-    resolvedBucketId = cached;
     return cached;
   }
 
   try {
-    // 1. Fetch shared bucket ID from immanuel.co directory service (GET is CORS-friendly)
-    const response = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${IMMANUEL_KEY}/${IMMANUEL_VAL_KEY}`);
+    // 1. Fetch shared bucket ID from immanuel.co directory service via CORS proxy
+    const targetDirUrl = `https://keyvalue.immanuel.co/api/KeyVal/GetValue/${IMMANUEL_KEY}/${IMMANUEL_VAL_KEY}`;
+    const response = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetDirUrl));
     const data = await response.text();
     let bucketId = data ? data.replace(/"/g, "").trim() : "";
 
@@ -50,7 +46,6 @@ export async function initCloudSync() {
     }
 
     if (bucketId) {
-      resolvedBucketId = bucketId;
       localStorage.setItem(CACHE_KEY, bucketId);
       return bucketId;
     }

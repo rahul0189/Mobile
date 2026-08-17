@@ -90,17 +90,6 @@ export default function App() {
     setSmsTemplates(getSmsTemplates());
     setSimSales(getSimSales());
 
-    // Silently sync from cloud on load if technician is logged in
-    const user = getAuthUser();
-    if (user && user.phone) {
-      fetchCloudData(user.phone, () => {
-        setTickets(getTickets());
-        setProducts(getProducts());
-        setSmsTemplates(getSmsTemplates());
-        setSimSales(getSimSales());
-      });
-    }
-
     // Listen for database updates
     const handleDbUpdate = () => {
       setTickets(getTickets());
@@ -132,6 +121,28 @@ export default function App() {
       window.removeEventListener('chand_auth_update', handleAuthUpdate);
     };
   }, []);
+
+  // Set up periodic cloud synchronization whenever the logged-in technician changes
+  useEffect(() => {
+    if (!authUserLocal || !authUserLocal.phone) return;
+
+    const runSync = () => {
+      fetchCloudData(authUserLocal.phone, () => {
+        setTickets(getTickets());
+        setProducts(getProducts());
+        setSmsTemplates(getSmsTemplates());
+        setSimSales(getSimSales());
+      });
+    };
+
+    // Run initial fetch on login/load
+    runSync();
+
+    // Poll every 10 seconds for background sync updates from other devices
+    const interval = setInterval(runSync, 10000);
+
+    return () => clearInterval(interval);
+  }, [authUserLocal]);
 
   // Sync state to local variables on manual changes
   const refreshDbState = () => {

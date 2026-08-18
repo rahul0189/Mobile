@@ -136,9 +136,6 @@ export default function DashboardScreen({
           </div>
         </div>
         <div className="header-actions">
-          <button className="btn btn-secondary" onClick={onOpenCloudSyncClick}>
-            <Database size={16} /> Sync
-          </button>
           <button className="btn btn-secondary" onClick={onOpenSmsTemplatesClick}>
             <MessageSquare size={16} /> Alerts Setup
           </button>
@@ -441,43 +438,7 @@ export default function DashboardScreen({
         {/* Right Column (Widgets Panel) */}
         <div className="right-panel-workspace">
           
-          {/* Lookup & Scanner Widget */}
-          <div className="lookup-widget">
-            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <QrCode size={18} className="text-cyan" /> MNP & ID LOOKUP
-            </h3>
 
-            {/* Viewfinder Mockup */}
-            <div className="scanner-viewfinder">
-              <div className="scanner-line"></div>
-              <Sparkles size={32} style={{ color: 'var(--color-cyan-glow)', opacity: 0.4 }} className="animate-pulse" />
-              <div style={{ fontSize: '10px', color: 'var(--color-text-muted)', marginTop: '8px', letterSpacing: '0.05em' }}>SCANNER ACTIVATED</div>
-            </div>
-
-            <form onSubmit={handleLookupSubmit}>
-              <div className="form-group" style={{ marginBottom: '12px' }}>
-                <input 
-                  type="text"
-                  className="form-input"
-                  placeholder="Enter Ticket ID (e.g. REP-1001)"
-                  value={lookupId}
-                  onChange={(e) => setLookupId(e.target.value)}
-                  style={{ textAlign: 'center', letterSpacing: '0.05em', height: '38px', fontSize: '13px' }}
-                />
-              </div>
-              {lookupError && (
-                <div style={{ color: 'var(--color-rose)', fontSize: '11px', textAlign: 'center', marginBottom: '8px', fontWeight: 600 }}>{lookupError}</div>
-              )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <button type="submit" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>
-                  Manual Look
-                </button>
-                <button type="button" className="btn btn-primary" onClick={() => alert("Simulating Camera QR Scan... Place barcode in front of webcam.")} style={{ padding: '6px 12px', fontSize: '12px' }}>
-                  Start Scan
-                </button>
-              </div>
-            </form>
-          </div>
 
           {/* Inventory Stock Alerts Widget */}
           <div className="lookup-widget">

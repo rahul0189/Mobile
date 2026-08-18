@@ -44,6 +44,7 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
   const [loginSuccess, setLoginSuccess] = useState("");
   const [passwordLogin, setPasswordLogin] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Navigation State
   const [currentDestination, setCurrentDestination] = useState("REPAIR_TICKETS");
@@ -172,9 +173,10 @@ export default function App() {
     return JSON.parse(techs);
   };
 
-  const handleAuthSubmit = (e) => {
+  const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setLoginError("");
+    setLoginSuccess("");
     const phone = phoneLogin.trim();
     const name = techNameLogin.trim();
     const password = passwordLogin.trim();
@@ -189,61 +191,93 @@ export default function App() {
       return;
     }
 
-    const techs = getRegisteredTechnicians();
+    setIsLoggingIn(true);
 
-    if (isForgotPassword) {
-      const idx = techs.findIndex(t => t.phone === phone);
-      if (idx === -1) {
-        setLoginError("This mobile number is not registered yet. Please select Sign Up!");
-        return;
+    try {
+      // 1. Fetch account credentials from the cloud database registry before checking password
+      if (!isSignUp) {
+        console.log(`[Sync] Downloading cloud credentials for ${phone}...`);
+        await syncCloudDatabase(phone, () => {
+          setTickets(getTickets());
+          setProducts(getProducts());
+          setSmsTemplates(getSmsTemplates());
+        });
       }
 
-      techs[idx].password = password;
-      localStorage.setItem('chand_registered_technicians', JSON.stringify(techs));
+      const techs = getRegisteredTechnicians();
 
-      // Go back to login screen with success message, DO NOT auto-login
-      setPasswordLogin("");
-      setIsForgotPassword(false);
-      setLoginSuccess("Password reset successfully! Please log in with your new password.");
-    } else if (isSignUp) {
-      if (!name) {
-        setLoginError("Please enter your name.");
-        return;
+      if (isForgotPassword) {
+        const idx = techs.findIndex(t => t.phone === phone);
+        if (idx === -1) {
+          setLoginError("This mobile number is not registered yet. Please select Sign Up!");
+          setIsLoggingIn(false);
+          return;
+        }
+
+        techs[idx].password = password;
+        localStorage.setItem('chand_registered_technicians', JSON.stringify(techs));
+
+        // Push new credentials to cloud immediately
+        localStorage.setItem('chand_last_local_write_time', Date.now().toString());
+        await syncCloudDatabase(phone);
+
+        // Go back to login screen with success message, DO NOT auto-login
+        setPasswordLogin("");
+        setIsForgotPassword(false);
+        setLoginSuccess("Password reset successfully! Please log in with your new password.");
+      } else if (isSignUp) {
+        if (!name) {
+          setLoginError("Please enter your name.");
+          setIsLoggingIn(false);
+          return;
+        }
+        const exists = techs.find(t => t.phone === phone);
+        if (exists) {
+          setLoginError("This mobile number is already registered. Switch to Sign In!");
+          setIsLoggingIn(false);
+          return;
+        }
+
+        const newUser = { name, phone, password, provider: "phone" };
+        techs.push(newUser);
+        localStorage.setItem('chand_registered_technicians', JSON.stringify(techs));
+
+        // Sync initial technician registry block with cloud database
+        localStorage.setItem('chand_last_local_write_time', Date.now().toString());
+        await syncCloudDatabase(phone);
+
+        // Log in immediately
+        setAuthUser(newUser);
+        setAuthUserLocal(newUser);
+        setPasswordLogin("");
+        refreshDbState();
+      } else {
+        const exists = techs.find(t => t.phone === phone);
+        if (!exists) {
+          setLoginError("Account not found. Please register by selecting Sign Up!");
+          setIsLoggingIn(false);
+          return;
+        }
+
+        // Check password (fallback to '123' if not set in legacy account)
+        const correctPassword = exists.password || "123";
+        if (password !== correctPassword) {
+          setLoginError("Invalid password. Please try again.");
+          setIsLoggingIn(false);
+          return;
+        }
+
+        // Log in
+        setAuthUser(exists);
+        setAuthUserLocal(exists);
+        setPasswordLogin("");
+        refreshDbState();
       }
-      const exists = techs.find(t => t.phone === phone);
-      if (exists) {
-        setLoginError("This mobile number is already registered. Switch to Sign In!");
-        return;
-      }
-
-      const newUser = { name, phone, password, provider: "phone" };
-      techs.push(newUser);
-      localStorage.setItem('chand_registered_technicians', JSON.stringify(techs));
-
-      // Log in immediately
-      setAuthUser(newUser);
-      setAuthUserLocal(newUser);
-      setPasswordLogin("");
-      refreshDbState();
-    } else {
-      const exists = techs.find(t => t.phone === phone);
-      if (!exists) {
-        setLoginError("Account not found. Please register by selecting Sign Up!");
-        return;
-      }
-
-      // Check password (fallback to '123' if not set in legacy account)
-      const correctPassword = exists.password || "123";
-      if (password !== correctPassword) {
-        setLoginError("Invalid password. Please try again.");
-        return;
-      }
-
-      // Log in
-      setAuthUser(exists);
-      setAuthUserLocal(exists);
-      setPasswordLogin("");
-      refreshDbState();
+    } catch (err) {
+      console.error("[Login Sync Error] ", err);
+      setLoginError("Network connection failed. Could not verify credentials.");
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -559,8 +593,8 @@ export default function App() {
                   </div>
                 )}
 
-                <button type="submit" className="btn btn-primary auth-submit-btn" style={{ width: '100%', marginTop: '10px' }}>
-                  {isForgotPassword ? "Reset Password & Login" : isSignUp ? "Register & Access Panel" : "Login & Access Panel"}
+                <button type="submit" className="btn btn-primary auth-submit-btn" style={{ width: '100%', marginTop: '10px' }} disabled={isLoggingIn}>
+                  {isLoggingIn ? "Verifying & Syncing Cloud..." : isForgotPassword ? "Reset Password & Login" : isSignUp ? "Register & Access Panel" : "Login & Access Panel"}
                 </button>
               </form>
             </div>

@@ -445,6 +445,21 @@ export default function App() {
     refreshDbState(true);
   };
 
+  const handleDeleteTicket = (id) => {
+    if (confirm("Are you sure you want to permanently delete this repair ticket?")) {
+      deleteTicket(id);
+      setSelectedTicket(null);
+      refreshDbState(true);
+    }
+  };
+
+  const handleDeleteProduct = (id) => {
+    if (confirm("Are you sure you want to permanently delete this product?")) {
+      deleteProduct(id);
+      refreshDbState(true);
+    }
+  };
+
   // Calculate low stock metrics
   const lowStockCount = products.filter(p => p.quantity <= p.lowStockThreshold).length;
 
@@ -843,7 +858,7 @@ export default function App() {
                   setShowAddEditDialog(true);
                 }}
                 onShowReceipt={(ticket) => setReceiptTicket(ticket)}
-                onDeleteTicket={(id) => deleteTicket(id)}
+                onDeleteTicket={handleDeleteTicket}
                 onSendSmsAlert={(ticket) => handlePrepareSms(ticket, ticket.status)}
                 onNewTicketForCustomer={handleNewTicketForCustomer}
               />
@@ -891,7 +906,7 @@ export default function App() {
                           setEditingProduct(prod);
                           setShowAddEditProductDialog(true);
                         }}
-                        onDeleteProductClick={(id) => deleteProduct(id)}
+                        onDeleteProductClick={handleDeleteProduct}
                         onAdjustQuantity={handleAdjustQuantity}
                       />
                     );

@@ -100,10 +100,19 @@ export function createOrUpdateTicket(ticket) {
     updatedTicket.dateCreatedMillis = Date.now();
     updatedTicket.dateUpdatedMillis = Date.now();
     updatedTicket.status = ticket.status || 'RECEIVED';
+    
+    // Assign currently logged-in technician
+    const currentTech = getAuthUser();
+    updatedTicket.technicianName = currentTech ? currentTech.name : "Rahul";
+    
     tickets.push(updatedTicket);
   } else {
     // Edit existing ticket
     updatedTicket.dateUpdatedMillis = Date.now();
+    if (!updatedTicket.technicianName) {
+      const currentTech = getAuthUser();
+      updatedTicket.technicianName = currentTech ? currentTech.name : "Rahul";
+    }
     const idx = tickets.findIndex(t => t.id === ticket.id);
     if (idx !== -1) {
       tickets[idx] = updatedTicket;

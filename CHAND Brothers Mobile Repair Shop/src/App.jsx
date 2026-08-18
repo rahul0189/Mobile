@@ -679,13 +679,7 @@ export default function App() {
                 <BarChart3 size={14} />
                 <span>Reports & Analytics</span>
               </button>
-              <button 
-                className={`top-nav-tab ${currentDestination === 'GOOGLE_CLOUD_SYNC' ? 'active' : ''}`}
-                onClick={() => { setSelectedTicket(null); setCurrentDestination('GOOGLE_CLOUD_SYNC'); }}
-              >
-                <Database size={14} />
-                <span>Cloud Sync</span>
-              </button>
+
             </nav>
 
             <div className="top-nav-actions">

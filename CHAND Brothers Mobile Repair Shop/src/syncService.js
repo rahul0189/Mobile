@@ -1,112 +1,44 @@
-const IMMANUEL_KEY = "chand_brothers_shop_app";
-
-// Local storage key for resolved bucket ID cache
-const CACHE_KEY = "chand_cloud_bucket_id";
-
-// Initialize and resolve the cloud bucket ID for a specific technician phone number
-export async function resolveUserBucket(phone) {
-  const cleanPhone = phone.replace(/\D/g, "");
-  if (!cleanPhone) return "";
-
-  // Check local cache first
-  const cached = localStorage.getItem(CACHE_KEY);
-  if (cached && cached.length > 5 && !cached.includes("not found")) {
-    return cached;
-  }
-
-  try {
-    // 1. Fetch bucket ID mapped to this phone number from immanuel.co directory service (CORS-friendly GET)
-    const targetDirUrl = `https://keyvalue.immanuel.co/api/KeyVal/GetValue/${IMMANUEL_KEY}/bucket_${cleanPhone}`;
-    const response = await fetch(targetDirUrl);
-    const data = await response.text();
-    let bucketId = data ? data.replace(/"/g, "").trim() : "";
-
-    const isInvalid = !bucketId || 
-                      bucketId.includes("error") || 
-                      bucketId.toLowerCase().includes("not found") || 
-                      bucketId.toLowerCase().includes("notfound") ||
-                      bucketId.length < 10;
-
-    // 2. If no bucket exists for this account, create a new one on kvdb.io using multi-proxy fallback
-    if (isInvalid) {
-      console.log(`[Sync] Creating new KVdb bucket for account ${cleanPhone}...`);
-      
-      const proxies = [
-        'https://thingproxy.freeboard.io/fetch/https://kvdb.io/',
-        'https://corsproxy.io/?url=https%3A%2F%2Fkvdb.io%2F',
-        'https://api.codetabs.com/v1/proxy?quest=https://kvdb.io/'
-      ];
-
-      for (const proxyUrl of proxies) {
-        try {
-          console.log(`[Sync] Trying bucket creation proxy: ${proxyUrl}`);
-          const createRes = await fetch(proxyUrl, { method: 'POST' });
-          if (createRes.ok) {
-            const text = (await createRes.text()).trim();
-            if (text && text.length > 5 && !text.includes('html') && !text.includes('error')) {
-              bucketId = text;
-              console.log(`[Sync] Successfully created bucket via proxy: ${bucketId}`);
-              break; // Success
-            }
-          }
-        } catch (err) {
-          console.warn(`[Sync] Proxy failed: ${proxyUrl}`, err);
-        }
-      }
-
-      if (bucketId && bucketId.length > 5 && !bucketId.includes('html')) {
-        // Save the mapping to immanuel.co directory (CORS-friendly POST)
-        const updateUrl = `https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${IMMANUEL_KEY}/bucket_${cleanPhone}/${bucketId}`;
-        await fetch(updateUrl, { method: 'POST' });
-        console.log(`[Sync] Saved bucket mapping for ${cleanPhone}: ${bucketId}`);
-      } else {
-        throw new Error("Could not create cloud storage. All proxies failed.");
-      }
-    }
-
-    if (bucketId && bucketId.length > 5) {
-      localStorage.setItem(CACHE_KEY, bucketId);
-      return bucketId;
-    }
-  } catch (e) {
-    console.error(`[Sync] Bucket resolution failed for account ${cleanPhone}:`, e);
-    throw e;
-  }
-
-  return "";
-}
+const UPSTASH_URL = import.meta.env.VITE_UPSTASH_KV_REST_API_URL || "https://fitting-bream-138175.upstash.io";
+const UPSTASH_TOKEN = import.meta.env.VITE_UPSTASH_KV_REST_API_TOKEN || "gQAAAAAAAhu_AAIgcDJhZWMzZDA0OTg2Yjg0MGNjOGNhYTdmNGQ3M2I4MjAyMA";
 
 // Perform bidirectional synchronization using Last-Write-Wins (LWW) conflict resolution
 export async function syncCloudDatabase(phone, onUpdate) {
-  if (!phone) return;
+  if (!phone || !UPSTASH_URL || !UPSTASH_TOKEN) return;
   const cleanPhone = phone.replace(/\D/g, "");
-  const bucketId = await resolveUserBucket(cleanPhone);
-  if (!bucketId) return;
-
-  const targetUrl = `https://kvdb.io/${bucketId}/shop_database`;
+  const dbKey = `chand_shop_db_${cleanPhone}`;
 
   // Get local write time
   const localWriteTimeStr = localStorage.getItem('chand_last_local_write_time');
   const localWriteTime = localWriteTimeStr ? Number(localWriteTimeStr) : 0;
 
   try {
-    const response = await fetch(targetUrl);
-    
-    // Case 1: No cloud database exists yet
-    if (!response.ok) {
-      if (response.status === 404) {
-        console.log('[Sync] No cloud database found. Uploading local database...');
-        await uploadLocalDatabase(bucketId, localWriteTime || Date.now());
+    // 1. Fetch cloud database from Upstash KV using REST API
+    const response = await fetch(`${UPSTASH_URL}/get/${dbKey}`, {
+      headers: {
+        Authorization: `Bearer ${UPSTASH_TOKEN}`
       }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upstash returned error status: ${response.status}`);
+    }
+
+    const resJson = await response.json();
+    const cloudRawVal = resJson.result; // Upstash returns value in the "result" field
+
+    // Case 1: No cloud database exists yet
+    if (!cloudRawVal) {
+      console.log('[Sync] No database found in Vercel KV. Uploading local database...');
+      await uploadLocalDatabase(dbKey, localWriteTime || Date.now());
       return;
     }
 
-    const cloudData = await response.json();
+    const cloudData = JSON.parse(cloudRawVal);
     const cloudBackupTime = cloudData.backupTime || 0;
 
     // Case 2: Cloud is newer (or equal) -> Download & overwrite local storage
     if (cloudBackupTime >= localWriteTime) {
-      console.log('[Sync] Cloud database is newer. Restoring locally...', { cloudBackupTime, localWriteTime });
+      console.log('[Sync] Vercel KV is newer. Restoring locally...', { cloudBackupTime, localWriteTime });
       
       if (cloudData.tickets) localStorage.setItem('chand_repair_tickets', JSON.stringify(cloudData.tickets));
       if (cloudData.products) localStorage.setItem('chand_products', JSON.stringify(cloudData.products));
@@ -124,8 +56,8 @@ export async function syncCloudDatabase(phone, onUpdate) {
     } 
     // Case 3: Local is newer -> Upload & overwrite cloud database
     else {
-      console.log('[Sync] Local database has newer changes. Backing up to cloud...', { localWriteTime, cloudBackupTime });
-      await uploadLocalDatabase(bucketId, localWriteTime);
+      console.log('[Sync] Local database has newer changes. Backing up to Vercel KV...', { localWriteTime, cloudBackupTime });
+      await uploadLocalDatabase(dbKey, localWriteTime);
     }
   } catch (e) {
     console.error('[Sync] Bidirectional sync failed:', e);
@@ -133,9 +65,8 @@ export async function syncCloudDatabase(phone, onUpdate) {
   }
 }
 
-// Helper function to upload local database package
-async function uploadLocalDatabase(bucketId, timestamp) {
-  const targetUrl = `https://kvdb.io/${bucketId}/shop_database`;
+// Helper function to upload local database package to Upstash Redis REST endpoint
+async function uploadLocalDatabase(dbKey, timestamp) {
   const payload = {
     tickets: JSON.parse(localStorage.getItem('chand_repair_tickets')) || [],
     products: JSON.parse(localStorage.getItem('chand_products')) || [],
@@ -145,13 +76,19 @@ async function uploadLocalDatabase(bucketId, timestamp) {
   };
 
   try {
-    await fetch(targetUrl, {
+    // Send command to set key in Upstash using REST POST request
+    const response = await fetch(`${UPSTASH_URL}/set/${dbKey}`, {
       method: 'POST',
       headers: {
+        Authorization: `Bearer ${UPSTASH_TOKEN}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
     });
+
+    if (!response.ok) {
+      throw new Error(`Failed to upload to Upstash. Status: ${response.status}`);
+    }
   } catch (e) {
     console.error('[Sync] Database upload failed:', e);
     throw e;
@@ -164,8 +101,16 @@ export async function fetchCloudData(phone, onUpdate) {
 }
 
 export async function saveCloudData(phone) {
-  const cached = localStorage.getItem(CACHE_KEY);
-  if (!cached) return;
+  const cleanPhone = phone.replace(/\D/g, "");
+  const dbKey = `chand_shop_db_${cleanPhone}`;
   const localWriteTimeStr = localStorage.getItem('chand_last_local_write_time') || Date.now().toString();
-  return uploadLocalDatabase(cached, Number(localWriteTimeStr));
+  return uploadLocalDatabase(dbKey, Number(localWriteTimeStr));
+}
+
+export async function resolveUserBucket(phone) {
+  return "vercel_kv_active";
+}
+
+export async function initCloudSync() {
+  return "vercel_kv_active";
 }

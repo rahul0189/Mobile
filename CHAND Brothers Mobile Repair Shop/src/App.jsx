@@ -81,6 +81,8 @@ export default function App() {
   const [googleAccount, setGoogleAccount] = useState({ isLoggedIn: false, name: "", email: "" });
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatusMsg, setSyncStatusMsg] = useState("");
+  const [syncError, setSyncError] = useState("");
+  const [syncBucketId, setSyncBucketId] = useState("");
 
   // Trigger loading database on start
   useEffect(() => {
@@ -122,14 +124,25 @@ export default function App() {
 
   // Set up periodic cloud synchronization whenever the logged-in technician changes
   useEffect(() => {
-    if (!authUser || !authUser.phone) return;
+    if (!authUser || !authUser.phone) {
+      setSyncBucketId("");
+      setSyncError("");
+      return;
+    }
 
-    const runSync = () => {
-      syncCloudDatabase(authUser.phone, () => {
-        setTickets(getTickets());
-        setProducts(getProducts());
-        setSmsTemplates(getSmsTemplates());
-      });
+    const runSync = async () => {
+      try {
+        await syncCloudDatabase(authUser.phone, () => {
+          setTickets(getTickets());
+          setProducts(getProducts());
+          setSmsTemplates(getSmsTemplates());
+        });
+        setSyncBucketId(localStorage.getItem('chand_cloud_bucket_id') || "");
+        setSyncError("");
+      } catch (err) {
+        console.error("Cloud synchronization polling failed:", err);
+        setSyncError(err.message || "Failed to sync");
+      }
     };
 
     // Run initial fetch on login/load
@@ -142,7 +155,7 @@ export default function App() {
   }, [authUser]);
 
   // Sync state to local variables on manual changes
-  const refreshDbState = (isLocalMutation = false) => {
+  const refreshDbState = async (isLocalMutation = false) => {
     setTickets(getTickets());
     setProducts(getProducts());
     setSmsTemplates(getSmsTemplates());
@@ -152,11 +165,18 @@ export default function App() {
       localStorage.setItem('chand_last_local_write_time', Date.now().toString());
       const user = getAuthUser();
       if (user && user.phone) {
-        syncCloudDatabase(user.phone, () => {
-          setTickets(getTickets());
-          setProducts(getProducts());
-          setSmsTemplates(getSmsTemplates());
-        });
+        try {
+          await syncCloudDatabase(user.phone, () => {
+            setTickets(getTickets());
+            setProducts(getProducts());
+            setSmsTemplates(getSmsTemplates());
+          });
+          setSyncBucketId(localStorage.getItem('chand_cloud_bucket_id') || "");
+          setSyncError("");
+        } catch (err) {
+          console.error("Cloud upload on local mutation failed:", err);
+          setSyncError(err.message || "Failed to upload changes");
+        }
       }
     }
   };
@@ -850,6 +870,8 @@ export default function App() {
                         onOpenDrawer={() => setIsSidebarOpen(true)}
                         lowStockCount={lowStockCount}
                         userName={authUser.name}
+                        syncError={syncError}
+                        syncBucketId={syncBucketId}
                       />
                     );
                   case "PRODUCT_INVENTORY":

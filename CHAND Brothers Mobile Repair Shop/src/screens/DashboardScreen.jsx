@@ -21,7 +21,9 @@ export default function DashboardScreen({
   onOpenCloudSyncClick,
   onOpenDrawer,
   lowStockCount,
-  userName
+  userName,
+  syncError,
+  syncBucketId
 }) {
   const [lookupId, setLookupId] = useState("");
   const [lookupError, setLookupError] = useState("");
@@ -117,7 +119,20 @@ export default function DashboardScreen({
           </button>
           <div>
             <h1>Repair Workspace</h1>
-            <p className="welcome-msg">Logged in as: <span className="tech-name">{userName || "Rahul"}</span></p>
+            <p className="welcome-msg" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+              <span>Logged in as: <span className="tech-name">{userName || "Rahul"}</span></span>
+              {syncBucketId ? (
+                <span className="sync-status-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', padding: '1px 6px', borderRadius: '10px', backgroundColor: syncError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', color: syncError ? 'var(--color-rose)' : 'var(--color-emerald)', border: `1px solid ${syncError ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'}` }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: syncError ? 'var(--color-rose)' : 'var(--color-emerald)', display: 'inline-block' }}></span>
+                  {syncError ? `Sync Error` : `Cloud Synced`}
+                </span>
+              ) : (
+                <span className="sync-status-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', padding: '1px 6px', borderRadius: '10px', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#f59e0b', display: 'inline-block' }}></span>
+                  Sync Off
+                </span>
+              )}
+            </p>
           </div>
         </div>
         <div className="header-actions">

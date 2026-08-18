@@ -15,9 +15,9 @@ export async function resolveUserBucket(phone) {
   }
 
   try {
-    // 1. Fetch bucket ID mapped to this phone number from immanuel.co directory service (via CORS proxy)
+    // 1. Fetch bucket ID mapped to this phone number from immanuel.co directory service (CORS-friendly GET)
     const targetDirUrl = `https://keyvalue.immanuel.co/api/KeyVal/GetValue/${IMMANUEL_KEY}/bucket_${cleanPhone}`;
-    const response = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetDirUrl));
+    const response = await fetch(targetDirUrl);
     const data = await response.text();
     let bucketId = data ? data.replace(/"/g, "").trim() : "";
 
@@ -27,23 +27,40 @@ export async function resolveUserBucket(phone) {
                       bucketId.toLowerCase().includes("notfound") ||
                       bucketId.length < 10;
 
-    // 2. If no bucket exists for this account, create a new one on kvdb.io (via CORS proxy)
+    // 2. If no bucket exists for this account, create a new one on kvdb.io using multi-proxy fallback
     if (isInvalid) {
       console.log(`[Sync] Creating new KVdb bucket for account ${cleanPhone}...`);
-      const targetUrl = 'https://kvdb.io/';
-      const createRes = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetUrl), {
-        method: 'POST'
-      });
-      if (createRes.ok) {
-        bucketId = (await createRes.text()).trim();
-        if (bucketId) {
-          // Save the mapping to immanuel.co directory (via CORS proxy POST)
-          const updateUrl = `https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${IMMANUEL_KEY}/bucket_${cleanPhone}/${bucketId}`;
-          await fetch('https://corsproxy.io/?url=' + encodeURIComponent(updateUrl), {
-            method: 'POST'
-          });
-          console.log(`[Sync] Saved bucket mapping for ${cleanPhone}: ${bucketId}`);
+      
+      const proxies = [
+        'https://thingproxy.freeboard.io/fetch/https://kvdb.io/',
+        'https://corsproxy.io/?url=https%3A%2F%2Fkvdb.io%2F',
+        'https://api.codetabs.com/v1/proxy?quest=https://kvdb.io/'
+      ];
+
+      for (const proxyUrl of proxies) {
+        try {
+          console.log(`[Sync] Trying bucket creation proxy: ${proxyUrl}`);
+          const createRes = await fetch(proxyUrl, { method: 'POST' });
+          if (createRes.ok) {
+            const text = (await createRes.text()).trim();
+            if (text && text.length > 5 && !text.includes('html') && !text.includes('error')) {
+              bucketId = text;
+              console.log(`[Sync] Successfully created bucket via proxy: ${bucketId}`);
+              break; // Success
+            }
+          }
+        } catch (err) {
+          console.warn(`[Sync] Proxy failed: ${proxyUrl}`, err);
         }
+      }
+
+      if (bucketId && bucketId.length > 5 && !bucketId.includes('html')) {
+        // Save the mapping to immanuel.co directory (CORS-friendly POST)
+        const updateUrl = `https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${IMMANUEL_KEY}/bucket_${cleanPhone}/${bucketId}`;
+        await fetch(updateUrl, { method: 'POST' });
+        console.log(`[Sync] Saved bucket mapping for ${cleanPhone}: ${bucketId}`);
+      } else {
+        throw new Error("Could not create cloud storage. All proxies failed.");
       }
     }
 
@@ -53,6 +70,7 @@ export async function resolveUserBucket(phone) {
     }
   } catch (e) {
     console.error(`[Sync] Bucket resolution failed for account ${cleanPhone}:`, e);
+    throw e;
   }
 
   return "";
@@ -72,7 +90,7 @@ export async function syncCloudDatabase(phone, onUpdate) {
   const localWriteTime = localWriteTimeStr ? Number(localWriteTimeStr) : 0;
 
   try {
-    const response = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetUrl));
+    const response = await fetch(targetUrl);
     
     // Case 1: No cloud database exists yet
     if (!response.ok) {
@@ -94,6 +112,11 @@ export async function syncCloudDatabase(phone, onUpdate) {
       if (cloudData.products) localStorage.setItem('chand_products', JSON.stringify(cloudData.products));
       if (cloudData.smsTemplates) localStorage.setItem('chand_sms_templates', JSON.stringify(cloudData.smsTemplates));
       
+      // Sync technicians passwords database!
+      if (cloudData.registered_technicians) {
+        localStorage.setItem('chand_registered_technicians', JSON.stringify(cloudData.registered_technicians));
+      }
+      
       // Update local write timestamp to match cloud
       localStorage.setItem('chand_last_local_write_time', cloudBackupTime.toString());
       
@@ -106,6 +129,7 @@ export async function syncCloudDatabase(phone, onUpdate) {
     }
   } catch (e) {
     console.error('[Sync] Bidirectional sync failed:', e);
+    throw e;
   }
 }
 
@@ -116,11 +140,12 @@ async function uploadLocalDatabase(bucketId, timestamp) {
     tickets: JSON.parse(localStorage.getItem('chand_repair_tickets')) || [],
     products: JSON.parse(localStorage.getItem('chand_products')) || [],
     smsTemplates: JSON.parse(localStorage.getItem('chand_sms_templates')) || {},
+    registered_technicians: JSON.parse(localStorage.getItem('chand_registered_technicians')) || [],
     backupTime: timestamp
   };
 
   try {
-    await fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetUrl), {
+    await fetch(targetUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -129,6 +154,7 @@ async function uploadLocalDatabase(bucketId, timestamp) {
     });
   } catch (e) {
     console.error('[Sync] Database upload failed:', e);
+    throw e;
   }
 }
 

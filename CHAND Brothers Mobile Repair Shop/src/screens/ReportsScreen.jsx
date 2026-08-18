@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Menu, TrendingUp, IndianRupee, PieChart, BarChart3, 
   ChevronRight, ArrowUpRight, ArrowDownRight, Package, DollarSign,
-  Download, Printer, ChevronDown, FileSpreadsheet, Users
+  Download, Printer, ChevronDown, FileSpreadsheet
 } from 'lucide-react';
 import { REPAIR_STATUSES } from '../state';
 
@@ -150,20 +150,6 @@ export default function ReportsScreen({
   const partsPercentage = totalPartsCostAll + totalLaborCostAll > 0 
     ? (totalPartsCostAll / (totalPartsCostAll + totalLaborCostAll)) * 100 
     : 50;
-
-  // Chart 5: Technician Performance
-  const techPerformance = {};
-  tickets.forEach(t => {
-    const tech = t.technicianName || "Rahul";
-    if (!techPerformance[tech]) {
-      techPerformance[tech] = { jobsCount: 0, revenue: 0 };
-    }
-    techPerformance[tech].jobsCount++;
-    const cost = t.estimatedCost > 0 ? t.estimatedCost : (t.partsCost + t.laborCost);
-    const revenue = t.status === 'DELIVERED' ? cost : t.advancePaid;
-    techPerformance[tech].revenue += (revenue || 0);
-  });
-  const sortedTechs = Object.entries(techPerformance).sort((a, b) => b[1].revenue - a[1].revenue);
 
   return (
     <div className="reports-container">
@@ -386,40 +372,6 @@ export default function ReportsScreen({
             </div>
           )}
         </div>
-
-        {/* Chart 5: Technician Performance */}
-        <div className="chart-card card" style={{ gridColumn: 'span 2' }}>
-          <h3 className="chart-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Users size={18} className="text-cyan" /> Technician Performance Leaderboard
-          </h3>
-          <div className="table-responsive-wrapper" style={{ marginTop: '12px' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--color-border)', fontSize: '11px', color: 'var(--color-text-secondary)' }}>
-                  <th style={{ padding: '8px 12px' }}>Technician Name</th>
-                  <th style={{ padding: '8px 12px', textAlign: 'center' }}>Jobs Handled</th>
-                  <th style={{ padding: '8px 12px', textAlign: 'right' }}>Revenue Contribution</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedTechs.length === 0 ? (
-                  <tr>
-                    <td colSpan="3" style={{ textAlign: 'center', padding: '16px', color: 'var(--color-text-muted)' }}>No performance stats available</td>
-                  </tr>
-                ) : (
-                  sortedTechs.map(([tech, stats]) => (
-                    <tr key={tech} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                      <td style={{ padding: '10px 12px', fontWeight: 700, color: '#fff' }}>{tech}</td>
-                      <td style={{ padding: '10px 12px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>{stats.jobsCount} repairs</td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 800, color: 'var(--color-emerald)' }}>₹{stats.revenue.toLocaleString('en-IN')}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
       </div>
     </div>
   );

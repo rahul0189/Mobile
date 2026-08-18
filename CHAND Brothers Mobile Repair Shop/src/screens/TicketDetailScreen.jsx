@@ -56,117 +56,6 @@ export default function TicketDetailScreen({
     setShowStatusUpdateConfirm(false);
   };
 
-  const handleSendWhatsApp = () => {
-    const cleanPhone = ticket.customerPhone.replace(/\D/g, "");
-    if (!cleanPhone) {
-      alert("Invalid customer phone number!");
-      return;
-    }
-    
-    const statusName = REPAIR_STATUSES[ticket.status]?.displayName || ticket.status;
-    const due = totalCost - ticket.advancePaid;
-    
-    let message = "";
-    if (ticket.status === 'READY_FOR_PICKUP') {
-      message = `GREAT NEWS! Hello ${ticket.customerName}, your ${ticket.mobileBrand} ${ticket.mobileModel} (Ticket #${ticket.ticketNumber}) is fully REPAIRED & READY FOR PICKUP! Remaining balance: ₹${due}. Thank you - CHAND BROTHERS Mobile Repair Shop.`;
-    } else if (ticket.status === 'DELIVERED') {
-      message = `Thank you ${ticket.customerName}! Your device ${ticket.mobileBrand} ${ticket.mobileModel} (Ticket #${ticket.ticketNumber}) has been delivered. Thank you for choosing CHAND BROTHERS Mobile Repair Shop!`;
-    } else {
-      message = `Hello ${ticket.customerName}, your device (${ticket.mobileBrand} ${ticket.mobileModel}) is currently in status: ${statusName} (Ticket #${ticket.ticketNumber}). Estimated cost: ₹${totalCost}. Advance Paid: ₹${ticket.advancePaid}. Thank you - CHAND BROTHERS.`;
-    }
-
-    const url = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(message)}`;
-    window.open(url, '_blank');
-  };
-
-  const handlePrintReceipt = () => {
-    const printWindow = window.open('', '_blank');
-    const due = totalCost - ticket.advancePaid;
-    
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Receipt - ${ticket.ticketNumber}</title>
-          <style>
-            body { font-family: 'Courier New', Courier, monospace; width: 80mm; margin: 0; padding: 10px; color: #000; font-size: 12px; }
-            .header { text-align: center; margin-bottom: 15px; }
-            .header h2 { margin: 0; font-size: 16px; }
-            .header p { margin: 2px 0; font-size: 10px; }
-            .divider { border-top: 1px dashed #000; margin: 10px 0; }
-            .row { display: flex; justify-content: space-between; margin: 3px 0; }
-            .bold { font-weight: bold; }
-            .footer { text-align: center; margin-top: 20px; font-size: 10px; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h2>CHAND BROTHERS</h2>
-            <p>Mobile Repair Shop</p>
-            <p>Ph: +91 79869 11294</p>
-          </div>
-          <div class="divider"></div>
-          <div class="row bold"><span>Ticket No:</span> <span>${ticket.ticketNumber}</span></div>
-          <div class="row"><span>Date:</span> <span>${new Date(ticket.dateCreatedMillis).toLocaleDateString('en-IN')}</span></div>
-          <div class="row"><span>Customer:</span> <span>${ticket.customerName}</span></div>
-          <div class="row"><span>Phone:</span> <span>${ticket.customerPhone}</span></div>
-          <div class="divider"></div>
-          <div class="row bold"><span>Device:</span> <span>${ticket.mobileBrand} ${ticket.mobileModel}</span></div>
-          <div class="row"><span>Issue:</span> <span>${ticket.issueCategory}</span></div>
-          <div class="row"><span>Description:</span> <span>${ticket.issueDescription}</span></div>
-          <div class="divider"></div>
-          <div class="row"><span>Total Cost:</span> <span>₹${totalCost}</span></div>
-          <div class="row"><span>Advance Paid:</span> <span>₹${ticket.advancePaid}</span></div>
-          <div class="divider"></div>
-          <div class="row bold" style="font-size: 14px;"><span>Balance Due:</span> <span>₹${due}</span></div>
-          <div class="divider"></div>
-          <div class="footer">
-            <p>Thank you for your business!</p>
-            <p>Please bring this slip for pickup.</p>
-          </div>
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(function() { window.close(); }, 500);
-            }
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-  };
-
-  const handlePrintLabel = () => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Label - ${ticket.ticketNumber}</title>
-          <style>
-            body { font-family: sans-serif; width: 50mm; height: 30mm; margin: 0; padding: 5px; box-sizing: border-box; font-size: 10px; }
-            .label-container { border: 1px solid #000; padding: 4px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
-            .bold { font-weight: bold; }
-            .ticket-no { font-size: 12px; font-family: monospace; }
-          </style>
-        </head>
-        <body>
-          <div class="label-container">
-            <div class="bold ticket-no">${ticket.ticketNumber}</div>
-            <div><span class="bold">Client:</span> ${ticket.customerName}</div>
-            <div><span class="bold">Device:</span> ${ticket.mobileBrand} ${ticket.mobileModel}</div>
-            <div><span class="bold">Issue:</span> ${ticket.issueCategory}</div>
-          </div>
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(function() { window.close(); }, 500);
-            }
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-  };
-
   return (
     <div className="ticket-detail-container">
       {/* Header */}
@@ -193,14 +82,11 @@ export default function TicketDetailScreen({
           </div>
         </div>
         <div className="header-actions">
-          <button className="btn btn-secondary" onClick={handleSendWhatsApp} style={{ backgroundColor: 'rgba(37, 211, 102, 0.15)', color: '#25D366', borderColor: 'rgba(37, 211, 102, 0.3)' }}>
-            <MessageSquare size={16} /> WhatsApp Alert
+          <button className="btn btn-secondary" onClick={() => onSendSmsAlert(ticket)}>
+            <MessageSquare size={16} /> SMS Alert
           </button>
-          <button className="btn btn-secondary" onClick={handlePrintReceipt}>
-            <Printer size={16} /> Print Receipt
-          </button>
-          <button className="btn btn-secondary" onClick={handlePrintLabel}>
-            <Printer size={16} /> Print Label
+          <button className="btn btn-secondary" onClick={() => onShowReceipt(ticket)}>
+            <Printer size={16} /> Receipt
           </button>
           <button className="btn btn-secondary" onClick={() => onEditTicket(ticket)}>
             <Edit3 size={16} /> Edit

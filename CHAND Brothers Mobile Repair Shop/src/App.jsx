@@ -22,7 +22,7 @@ import ProductInventoryScreen from './screens/ProductInventoryScreen';
 import CustomerDirectoryScreen from './screens/CustomerDirectoryScreen';
 import ReportsScreen from './screens/ReportsScreen';
 import GoogleCloudSyncScreen from './screens/GoogleCloudSyncScreen';
-import SimSalesScreen from './screens/SimSalesScreen';
+
 
 // Import Dialog Overlays
 import AddEditTicketDialog from './components/AddEditTicketDialog';
@@ -30,7 +30,7 @@ import AddEditProductDialog from './components/AddEditProductDialog';
 import SmsAlertDialog from './components/SmsAlertDialog';
 import SmsTemplateManagerDialog from './components/SmsTemplateManagerDialog';
 import ReceiptDialog from './components/ReceiptDialog';
-import AddEditSimSaleDialog from './components/AddEditSimSaleDialog';
+
 
 export default function App() {
   // Splash & Auth State
@@ -54,7 +54,7 @@ export default function App() {
   const [tickets, setTickets] = useState([]);
   const [products, setProducts] = useState([]);
   const [smsTemplates, setSmsTemplates] = useState({});
-  const [simSales, setSimSales] = useState([]);
+
 
   // Search & Filters State
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,8 +70,7 @@ export default function App() {
   const [showSmsTemplateDialog, setShowSmsTemplateDialog] = useState(false);
   const [pendingSmsAlert, setPendingSmsAlert] = useState(null);
   const [receiptTicket, setReceiptTicket] = useState(null);
-  const [showAddEditSimSaleDialog, setShowAddEditSimSaleDialog] = useState(false);
-  const [editingSimSale, setEditingSimSale] = useState(null);
+
 
   // Prefills
   const [prefillCustomerName, setPrefillCustomerName] = useState("");
@@ -88,14 +87,12 @@ export default function App() {
     setTickets(getTickets());
     setProducts(getProducts());
     setSmsTemplates(getSmsTemplates());
-    setSimSales(getSimSales());
 
     // Listen for database updates
     const handleDbUpdate = () => {
       setTickets(getTickets());
       setProducts(getProducts());
       setSmsTemplates(getSmsTemplates());
-      setSimSales(getSimSales());
     };
 
     // Listen for auth updates
@@ -131,7 +128,6 @@ export default function App() {
         setTickets(getTickets());
         setProducts(getProducts());
         setSmsTemplates(getSmsTemplates());
-        setSimSales(getSimSales());
       });
     };
 
@@ -149,7 +145,6 @@ export default function App() {
     setTickets(getTickets());
     setProducts(getProducts());
     setSmsTemplates(getSmsTemplates());
-    setSimSales(getSimSales());
 
     // Silently push changes to cloud database if this is a user-triggered write action
     if (isLocalMutation) {
@@ -160,7 +155,6 @@ export default function App() {
           setTickets(getTickets());
           setProducts(getProducts());
           setSmsTemplates(getSmsTemplates());
-          setSimSales(getSimSales());
         });
       }
     }
@@ -315,20 +309,7 @@ export default function App() {
     }
   };
 
-  // SIM Sales Operations handlers
-  const handleSaveSimSale = (saleData) => {
-    createOrUpdateSimSale(saleData);
-    setShowAddEditSimSaleDialog(false);
-    setEditingSimSale(null);
-    refreshDbState(true);
-  };
 
-  const handleDeleteSimSale = (id) => {
-    if (confirm("Are you sure you want to delete this SIM sale record?")) {
-      deleteSimSale(id);
-      refreshDbState(true);
-    }
-  };
 
   // Ticket Operations handlers
   const handleSaveTicket = (ticketData) => {
@@ -621,13 +602,7 @@ export default function App() {
                 <Users size={14} />
                 <span>Customer Directory</span>
               </button>
-              <button 
-                className={`top-nav-tab ${currentDestination === 'SIM_ACTIVATIONS' ? 'active' : ''}`}
-                onClick={() => { setSelectedTicket(null); setCurrentDestination('SIM_ACTIVATIONS'); }}
-              >
-                <Smartphone size={14} />
-                <span>SIM Activations</span>
-              </button>
+
               <button 
                 className={`top-nav-tab ${currentDestination === 'REPORTS' ? 'active' : ''}`}
                 onClick={() => { setSelectedTicket(null); setCurrentDestination('REPORTS'); }}
@@ -759,18 +734,7 @@ export default function App() {
                 <span>Customer Directory</span>
               </button>
 
-              <button 
-                className={`nav-item ${currentDestination === 'SIM_ACTIVATIONS' ? 'active' : ''}`}
-                onClick={() => {
-                  setSelectedTicket(null);
-                  setCurrentDestination('SIM_ACTIVATIONS');
-                  setIsSidebarOpen(false);
-                }}
-              >
-                <Smartphone size={18} />
-                <span>SIM Activations</span>
-                {simSales.length > 0 && <span className="nav-badge bg-cyan">{simSales.length}</span>}
-              </button>
+
 
               <button 
                 className={`nav-item ${currentDestination === 'REPORTS' ? 'active' : ''}`}
@@ -884,22 +848,7 @@ export default function App() {
                         onOpenDrawer={() => setIsSidebarOpen(true)}
                       />
                     );
-                  case "SIM_ACTIVATIONS":
-                    return (
-                      <SimSalesScreen
-                        sales={simSales}
-                        onOpenDrawer={() => setIsSidebarOpen(true)}
-                        onNewSaleClick={() => {
-                          setEditingSimSale(null);
-                          setShowAddEditSimSaleDialog(true);
-                        }}
-                        onEditSaleClick={(sale) => {
-                          setEditingSimSale(sale);
-                          setShowAddEditSimSaleDialog(true);
-                        }}
-                        onDeleteSaleClick={handleDeleteSimSale}
-                      />
-                    );
+
                   case "REPORTS":
                     return (
                       <ReportsScreen
@@ -986,16 +935,7 @@ export default function App() {
         />
       )}
 
-      {showAddEditSimSaleDialog && (
-        <AddEditSimSaleDialog
-          sale={editingSimSale}
-          onSave={handleSaveSimSale}
-          onDismiss={() => {
-            setShowAddEditSimSaleDialog(false);
-            setEditingSimSale(null);
-          }}
-        />
-      )}
+
 
 
     </>

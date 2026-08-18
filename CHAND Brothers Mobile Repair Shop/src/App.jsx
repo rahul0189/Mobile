@@ -817,17 +817,7 @@ export default function App() {
                 <span>Reports & Analytics</span>
               </button>
 
-              <button 
-                className={`nav-item ${currentDestination === 'GOOGLE_CLOUD_SYNC' ? 'active' : ''}`}
-                onClick={() => {
-                  setSelectedTicket(null);
-                  setCurrentDestination('GOOGLE_CLOUD_SYNC');
-                  setIsSidebarOpen(false);
-                }}
-              >
-                <Database size={18} />
-                <span>Cloud Sync & Export</span>
-              </button>
+
             </nav>
 
             <div className="sidebar-footer">

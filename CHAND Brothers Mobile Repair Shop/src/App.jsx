@@ -45,7 +45,6 @@ export default function App() {
   const [loginSuccess, setLoginSuccess] = useState("");
   const [passwordLogin, setPasswordLogin] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [shopPinCode, setShopPinCode] = useState("");
 
   // Navigation State
   const [currentDestination, setCurrentDestination] = useState("REPAIR_TICKETS");
@@ -212,19 +211,6 @@ export default function App() {
       return;
     }
 
-    // Require manager approval via Shop Verification Code for signups and password resets
-    if (isSignUp || isForgotPassword) {
-      const pin = shopPinCode.trim();
-      if (!pin) {
-        setLoginError("Please enter the Shop Verification Code.");
-        return;
-      }
-      if (pin !== "9888" && pin !== "9888362032") {
-        setLoginError("Incorrect Shop Verification Code. Please ask the manager.");
-        return;
-      }
-    }
-
     setIsLoggingIn(true);
 
     try {
@@ -257,7 +243,6 @@ export default function App() {
 
         // Go back to login screen with success message, DO NOT auto-login
         setPasswordLogin("");
-        setShopPinCode("");
         setIsForgotPassword(false);
         setLoginSuccess("Password reset successfully! Please log in with your new password.");
       } else if (isSignUp) {
@@ -285,7 +270,6 @@ export default function App() {
         setAuthUser(newUser);
         setAuthUserLocal(newUser);
         setPasswordLogin("");
-        setShopPinCode("");
         refreshDbState();
       } else {
         const exists = techs.find(t => t.phone === phone);
@@ -614,22 +598,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {(isSignUp || isForgotPassword) && (
-                  <div className="form-group">
-                    <label>Shop Verification Code</label>
-                    <div className="input-with-icon">
-                      <Shield size={16} className="input-icon" style={{ color: 'var(--color-cyan)' }} />
-                      <input 
-                        type="password" 
-                        className="form-input" 
-                        value={shopPinCode} 
-                        onChange={(e) => setShopPinCode(e.target.value)} 
-                        placeholder="Enter manager code"
-                        required
-                      />
-                    </div>
-                  </div>
-                )}
+
 
                 {!isSignUp && !isForgotPassword && (
                   <div style={{ textAlign: 'right', marginTop: '-12px', marginBottom: '16px' }}>

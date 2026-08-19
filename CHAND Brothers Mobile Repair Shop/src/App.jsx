@@ -33,9 +33,11 @@ import ReceiptDialog from './components/ReceiptDialog';
 
 
 export const SECURITY_QUESTIONS = {
-  pet: "What is the name of your favorite childhood pet?",
+  nickname: "What is your personal nickname / pet name?",
+  city: "In which city were you born?",
   school: "What was the name of your first school?",
-  maiden: "What is your mother's maiden name?"
+  friend: "What is the name of your best childhood friend?",
+  pet: "What was the name of your first pet? (Rahul default: 9888)"
 };
 
 export default function App() {
@@ -51,7 +53,7 @@ export default function App() {
   const [loginSuccess, setLoginSuccess] = useState("");
   const [passwordLogin, setPasswordLogin] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [securityQuestionSelect, setSecurityQuestionSelect] = useState("pet");
+  const [securityQuestionSelect, setSecurityQuestionSelect] = useState("nickname");
   const [securityAnswerInput, setSecurityAnswerInput] = useState("");
   const [forgotQuestionText, setForgotQuestionText] = useState("");
 

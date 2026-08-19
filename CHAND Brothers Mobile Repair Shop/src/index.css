@@ -3334,3 +3334,9 @@ textarea.form-input {
     gap: 16px;
   }
 }
+
+/* Fix option styling inside drop-downs in dark theme */
+.phone-login-form select.form-input option {
+  background-color: #0b0f19 !important;
+  color: #fff !important;
+}

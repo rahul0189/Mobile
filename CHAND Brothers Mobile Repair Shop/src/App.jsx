@@ -36,8 +36,7 @@ export const SECURITY_QUESTIONS = {
   nickname: "What is your personal nickname / pet name?",
   city: "In which city were you born?",
   school: "What was the name of your first school?",
-  friend: "What is the name of your best childhood friend?",
-  pet: "What was the name of your first pet? (Rahul default: 9888)"
+  friend: "What is the name of your best childhood friend?"
 };
 
 export default function App() {
@@ -196,8 +195,7 @@ export default function App() {
   const getRegisteredTechnicians = () => {
     let techs = localStorage.getItem('chand_registered_technicians');
     if (!techs) {
-      // Prepopulate with 'Rahul' account with default password '123'
-      const initialTechs = [{ name: "Rahul", phone: "7986911294", password: "123", securityQuestion: "pet", securityAnswer: "9888" }];
+      const initialTechs = [];
       localStorage.setItem('chand_registered_technicians', JSON.stringify(initialTechs));
       return initialTechs;
     }

@@ -32,6 +32,12 @@ import SmsTemplateManagerDialog from './components/SmsTemplateManagerDialog';
 import ReceiptDialog from './components/ReceiptDialog';
 
 
+export const SECURITY_QUESTIONS = {
+  pet: "What is the name of your favorite childhood pet?",
+  school: "What was the name of your first school?",
+  maiden: "What is your mother's maiden name?"
+};
+
 export default function App() {
   // Splash & Auth State
   const [showShutter, setShowShutter] = useState(true);
@@ -45,6 +51,9 @@ export default function App() {
   const [loginSuccess, setLoginSuccess] = useState("");
   const [passwordLogin, setPasswordLogin] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [securityQuestionSelect, setSecurityQuestionSelect] = useState("pet");
+  const [securityAnswerInput, setSecurityAnswerInput] = useState("");
+  const [forgotQuestionText, setForgotQuestionText] = useState("");
 
   // Navigation State
   const [currentDestination, setCurrentDestination] = useState("REPAIR_TICKETS");
@@ -186,11 +195,43 @@ export default function App() {
     let techs = localStorage.getItem('chand_registered_technicians');
     if (!techs) {
       // Prepopulate with 'Rahul' account with default password '123'
-      const initialTechs = [{ name: "Rahul", phone: "7986911294", password: "123" }];
+      const initialTechs = [{ name: "Rahul", phone: "7986911294", password: "123", securityQuestion: "pet", securityAnswer: "9888" }];
       localStorage.setItem('chand_registered_technicians', JSON.stringify(initialTechs));
       return initialTechs;
     }
     return JSON.parse(techs);
+  };
+
+  const handleFetchSecurityQuestion = async () => {
+    const phone = phoneLogin.trim();
+    if (!phone) {
+      setLoginError("Please enter your mobile number first to fetch your security question.");
+      return;
+    }
+    
+    setLoginError("");
+    setLoginSuccess("");
+    setIsLoggingIn(true);
+    
+    try {
+      // Fetch latest technicians database from cloud to get their question
+      await syncCloudDatabase(phone);
+      const techs = getRegisteredTechnicians();
+      const tech = techs.find(t => t.phone === phone);
+      if (tech) {
+        const questionKey = tech.securityQuestion || "pet";
+        const questionText = SECURITY_QUESTIONS[questionKey] || SECURITY_QUESTIONS.pet;
+        setForgotQuestionText(questionText);
+        setLoginError("");
+      } else {
+        setLoginError("Account not found. Please double-check your mobile number or sign up!");
+      }
+    } catch (err) {
+      console.error(err);
+      setLoginError("Failed to connect to cloud to fetch security question.");
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   const handleAuthSubmit = async (e) => {
@@ -234,6 +275,21 @@ export default function App() {
           return;
         }
 
+        // Validate security answer (case-insensitive, strip whitespace)
+        const correctAns = techs[idx].securityAnswer || "";
+        const enteredAns = securityAnswerInput.trim();
+        if (!enteredAns) {
+          setLoginError("Please enter the Security Answer.");
+          setIsLoggingIn(false);
+          return;
+        }
+
+        if (enteredAns.toLowerCase().replace(/\s/g, "") !== correctAns.toLowerCase().replace(/\s/g, "")) {
+          setLoginError("Incorrect Security Answer. Password reset blocked.");
+          setIsLoggingIn(false);
+          return;
+        }
+
         techs[idx].password = password;
         localStorage.setItem('chand_registered_technicians', JSON.stringify(techs));
 
@@ -243,6 +299,8 @@ export default function App() {
 
         // Go back to login screen with success message, DO NOT auto-login
         setPasswordLogin("");
+        setSecurityAnswerInput("");
+        setForgotQuestionText("");
         setIsForgotPassword(false);
         setLoginSuccess("Password reset successfully! Please log in with your new password.");
       } else if (isSignUp) {
@@ -258,7 +316,21 @@ export default function App() {
           return;
         }
 
-        const newUser = { name, phone, password, provider: "phone" };
+        const enteredAns = securityAnswerInput.trim();
+        if (!enteredAns) {
+          setLoginError("Please enter the Security Answer.");
+          setIsLoggingIn(false);
+          return;
+        }
+
+        const newUser = { 
+          name, 
+          phone, 
+          password, 
+          provider: "phone",
+          securityQuestion: securityQuestionSelect,
+          securityAnswer: enteredAns
+        };
         techs.push(newUser);
         localStorage.setItem('chand_registered_technicians', JSON.stringify(techs));
 
@@ -270,6 +342,7 @@ export default function App() {
         setAuthUser(newUser);
         setAuthUserLocal(newUser);
         setPasswordLogin("");
+        setSecurityAnswerInput("");
         refreshDbState();
       } else {
         const exists = techs.find(t => t.phone === phone);
@@ -517,6 +590,8 @@ export default function App() {
                     setIsSignUp(false);
                     setLoginError("");
                     setLoginSuccess("");
+                    setSecurityAnswerInput("");
+                    setForgotQuestionText("");
                   }}
                 >
                   Login
@@ -528,6 +603,8 @@ export default function App() {
                     setIsSignUp(true);
                     setLoginError("");
                     setLoginSuccess("");
+                    setSecurityAnswerInput("");
+                    setForgotQuestionText("");
                   }}
                 >
                   Sign Up
@@ -598,6 +675,77 @@ export default function App() {
                   </div>
                 </div>
 
+                {isSignUp && !isForgotPassword && (
+                  <>
+                    <div className="form-group">
+                      <label>Select Security Question</label>
+                      <select 
+                        className="form-input" 
+                        value={securityQuestionSelect} 
+                        onChange={(e) => setSecurityQuestionSelect(e.target.value)}
+                        style={{ background: 'var(--color-bg-secondary)', color: '#fff' }}
+                      >
+                        {Object.entries(SECURITY_QUESTIONS).map(([key, val]) => (
+                          <option key={key} value={key}>{val}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Security Question Answer</label>
+                      <div className="input-with-icon">
+                        <Lock size={16} className="input-icon" />
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          value={securityAnswerInput} 
+                          onChange={(e) => setSecurityAnswerInput(e.target.value)} 
+                          placeholder="Your secret answer"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {isForgotPassword && (
+                  <>
+                    {!forgotQuestionText ? (
+                      <button 
+                        type="button" 
+                        className="btn btn-secondary" 
+                        style={{ width: '100%', marginBottom: '16px', display: 'flex', justifyContent: 'center', gap: '8px' }}
+                        onClick={handleFetchSecurityQuestion}
+                        disabled={isLoggingIn}
+                      >
+                        Find Account & Get Security Question
+                      </button>
+                    ) : (
+                      <>
+                        <div className="form-group" style={{ backgroundColor: 'rgba(99,102,241,0.06)', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(99,102,241,0.15)', marginBottom: '16px' }}>
+                          <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--color-cyan)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Security Question:</span>
+                          <span style={{ fontSize: '13px', color: '#fff', fontWeight: 600 }}>{forgotQuestionText}</span>
+                        </div>
+
+                        <div className="form-group">
+                          <label>Enter Security Answer</label>
+                          <div className="input-with-icon">
+                            <Lock size={16} className="input-icon" />
+                            <input 
+                              type="text" 
+                              className="form-input" 
+                              value={securityAnswerInput} 
+                              onChange={(e) => setSecurityAnswerInput(e.target.value)} 
+                              placeholder="Your secret answer"
+                              required
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+
 
 
                 {!isSignUp && !isForgotPassword && (
@@ -607,6 +755,8 @@ export default function App() {
                       onClick={() => {
                         setIsForgotPassword(true);
                         setLoginError("");
+                        setSecurityAnswerInput("");
+                        setForgotQuestionText("");
                       }}
                       style={{ background: 'none', border: 'none', color: 'var(--color-cyan)', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}
                     >
@@ -622,6 +772,8 @@ export default function App() {
                       onClick={() => {
                         setIsForgotPassword(false);
                         setLoginError("");
+                        setSecurityAnswerInput("");
+                        setForgotQuestionText("");
                       }}
                       style={{ background: 'none', border: 'none', color: 'var(--color-cyan)', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}
                     >

@@ -44,13 +44,12 @@ export default function ReceiptDialog({
             {/* Invoice Header */}
             <div className="invoice-shop-header">
               <div className="shop-title-wrap">
-                <span className="brand-title">CHAND BROTHERS</span>
+                <span className="brand-title">CHAND BROTHER</span>
                 <span className="brand-subtitle">MOBILE REPAIR SHOP</span>
               </div>
               <div className="shop-contact-details">
-                <p>Main Market Road, Near Gandhi Chowk</p>
-                <p>Contact: +91 98765-43210, +91 99911-22334</p>
-                <p>Email: support@chandbrothers.com</p>
+                <p>Near Bus Stand Patti</p>
+                <p>Contact no. 9888362032</p>
               </div>
             </div>
 

@@ -496,7 +496,7 @@ export default function DashboardScreen({
                 padding: '12px 14px',
                 display: 'flex',
                 alignItems: 'center',
-                justify-content: 'space-between'
+                justifyContent: 'space-between'
               }}>
                 <div>
                   <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontWeight: 600, display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Today Collection</span>
@@ -517,7 +517,7 @@ export default function DashboardScreen({
                 padding: '12px 14px',
                 display: 'flex',
                 alignItems: 'center',
-                justify-content: 'space-between'
+                justifyContent: 'space-between'
               }}>
                 <div>
                   <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontWeight: 600, display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Weekly Collection</span>
@@ -538,7 +538,7 @@ export default function DashboardScreen({
                 padding: '12px 14px',
                 display: 'flex',
                 alignItems: 'center',
-                justify-content: 'space-between'
+                justifyContent: 'space-between'
               }}>
                 <div>
                   <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontWeight: 600, display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Monthly Collection</span>

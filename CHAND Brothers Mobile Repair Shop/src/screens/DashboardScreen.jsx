@@ -3,7 +3,8 @@ import {
   Plus, Search, Wrench, AlertTriangle, 
   IndianRupee, ChevronRight, MessageSquare, Menu,
   Database, Users, BarChart3, Smartphone, Cpu,
-  CheckCircle2, FileText, ShieldCheck, QrCode, Sparkles
+  CheckCircle2, FileText, ShieldCheck, QrCode, Sparkles,
+  TrendingUp, Calendar
 } from 'lucide-react';
 import { REPAIR_STATUSES } from '../state';
 
@@ -48,6 +49,48 @@ export default function DashboardScreen({
     const collected = t.status === 'DELIVERED' ? fullCost : t.advancePaid;
     return sum + (collected || 0);
   }, 0);
+
+  // Today, Weekly & Monthly Collections Calculations
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7).getTime();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+  let todayCollection = 0;
+  let weeklyCollection = 0;
+  let monthlyCollection = 0;
+
+  tickets.forEach(t => {
+    const fullCost = t.estimatedCost > 0 ? t.estimatedCost : ((t.partsCost || 0) + (t.laborCost || 0));
+    const advance = t.advancePaid || 0;
+    const isDelivered = t.status === 'DELIVERED';
+    const balance = isDelivered ? Math.max(0, fullCost - advance) : 0;
+    const totalCollectedForTicket = isDelivered ? fullCost : advance;
+
+    const createdMs = t.dateCreatedMillis || 0;
+    const updatedMs = t.dateUpdatedMillis || createdMs;
+
+    // Today's collection
+    if (createdMs >= todayStart) {
+      todayCollection += totalCollectedForTicket;
+    } else if (updatedMs >= todayStart && isDelivered) {
+      todayCollection += balance;
+    }
+
+    // Weekly collection
+    if (createdMs >= weekStart) {
+      weeklyCollection += totalCollectedForTicket;
+    } else if (updatedMs >= weekStart && isDelivered) {
+      weeklyCollection += balance;
+    }
+
+    // Monthly collection
+    if (createdMs >= monthStart) {
+      monthlyCollection += totalCollectedForTicket;
+    } else if (updatedMs >= monthStart && isDelivered) {
+      monthlyCollection += balance;
+    }
+  });
 
   // Quick lookup handler
   const handleLookupSubmit = (e) => {
@@ -438,7 +481,77 @@ export default function DashboardScreen({
         {/* Right Column (Widgets Panel) */}
         <div className="right-panel-workspace">
           
+          {/* Collection Overview (3 Boxes: Today, Weekly, Monthly) */}
+          <div className="lookup-widget" style={{ padding: '18px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <TrendingUp size={18} style={{ color: '#10b981' }} /> COLLECTION SUMMARY
+            </h3>
 
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {/* Box 1: Today Collection */}
+              <div style={{ 
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.04) 100%)',
+                border: '1px solid rgba(16, 185, 129, 0.25)',
+                borderRadius: '12px',
+                padding: '12px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                justify-content: 'space-between'
+              }}>
+                <div>
+                  <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontWeight: 600, display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Today Collection</span>
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: '#10b981', fontFamily: 'var(--font-family-title)', marginTop: '2px', display: 'block' }}>
+                    ₹{todayCollection.toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <IndianRupee size={18} />
+                </div>
+              </div>
+
+              {/* Box 2: Weekly Collection */}
+              <div style={{ 
+                background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(6, 182, 212, 0.04) 100%)',
+                border: '1px solid rgba(6, 182, 212, 0.25)',
+                borderRadius: '12px',
+                padding: '12px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                justify-content: 'space-between'
+              }}>
+                <div>
+                  <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontWeight: 600, display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Weekly Collection</span>
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-cyan)', fontFamily: 'var(--font-family-title)', marginTop: '2px', display: 'block' }}>
+                    ₹{weeklyCollection.toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'rgba(6, 182, 212, 0.15)', color: 'var(--color-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <BarChart3 size={18} />
+                </div>
+              </div>
+
+              {/* Box 3: Monthly Collection */}
+              <div style={{ 
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0.04) 100%)',
+                border: '1px solid rgba(99, 102, 241, 0.25)',
+                borderRadius: '12px',
+                padding: '12px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                justify-content: 'space-between'
+              }}>
+                <div>
+                  <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontWeight: 600, display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Monthly Collection</span>
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: '#818cf8', fontFamily: 'var(--font-family-title)', marginTop: '2px', display: 'block' }}>
+                    ₹{monthlyCollection.toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Calendar size={18} />
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Inventory Stock Alerts Widget */}
           <div className="lookup-widget">
